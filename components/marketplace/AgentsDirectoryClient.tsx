@@ -8,10 +8,7 @@ import {
   ShieldCheck,
   Phone,
   MessageCircle,
-  Mail,
-  Award,
   ArrowUpRight,
-  Globe,
   Sparkles,
   Search,
 } from 'lucide-react';
@@ -32,8 +29,8 @@ export const AgentsDirectoryClient: React.FC<Props> = ({ agents, properties }) =
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       const matchName = agent.name.toLowerCase().includes(q);
-      const matchTitle = agent.title.toLowerCase().includes(q);
-      const matchBrn = agent.brn.toLowerCase().includes(q);
+      const matchTitle = (agent.title ?? agent.designation).toLowerCase().includes(q);
+      const matchBrn = (agent.brn ?? '').toLowerCase().includes(q);
       const matchArea = agent.areas.some((a) => a.toLowerCase().includes(q));
       if (!matchName && !matchTitle && !matchBrn && !matchArea) return false;
     }
@@ -123,14 +120,14 @@ export const AgentsDirectoryClient: React.FC<Props> = ({ agents, properties }) =
                   <div className="space-y-1">
                     <span className="inline-flex items-center gap-1 text-[10px] uppercase font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5">
                       <ShieldCheck className="w-3 h-3" />
-                      <span>RERA BRN {agent.brn}</span>
+                      <span>RERA BRN {agent.brn ?? 'N/A'}</span>
                     </span>
                     <Link href={`/agents/${agent.slug}`}>
                       <h3 className="font-editorial text-xl text-[#F5F2EB] group-hover:text-[#B79A62] transition-colors">
                         {agent.name}
                       </h3>
                     </Link>
-                    <p className="text-xs text-[#A8A196]">{agent.title}</p>
+                    <p className="text-xs text-[#A8A196]">{agent.title ?? agent.designation}</p>
                   </div>
                 </div>
 
@@ -185,7 +182,7 @@ export const AgentsDirectoryClient: React.FC<Props> = ({ agents, properties }) =
                     <Phone className="w-3.5 h-3.5" />
                   </a>
                   <a
-                    href={`https://wa.me/${agent.whatsapp.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(agent.name)},%20I%20am%20interested%20in%20Tanmiyat%20properties.`}
+                    href={`https://wa.me/${agent.whatsApp.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(agent.name)},%20I%20am%20interested%20in%20Tanmiyat%20properties.`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 bg-[#171715] hover:bg-[#25221E] border border-[#25221E] text-[#25D366] transition-colors"
