@@ -1,0 +1,27 @@
+<svg viewBox="0 0 340 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D8BE8A" />
+      <stop offset="25%" stop-color="#C4A86E" />
+      <stop offset="50%" stop-color="#E9D7AF" />
+      <stop offset="75%" stop-color="#B79A62" />
+      <stop offset="100%" stop-color="#8C6F3B" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(120, 0)">
+    <path d="M25 46 L35 34 L35 68 C35 68 28 68 25 64 Z" fill="url(#goldGradient)" />
+    <path d="M17 56 C20 48 24 43 27 38 L30 42 C26 48 23 54 20 62 Z" fill="#D8BE8A" />
+    <path d="M44 14 L50 8 L56 14 L56 70 L44 70 Z" fill="url(#goldGradient)" />
+    <path d="M50 8 L50 70" stroke="#F5EFE0" stroke-width="0.75" stroke-opacity="0.6" />
+    <path d="M59 20 L66 14 L73 20 L73 68 C68 68 64 68 59 64 Z" fill="url(#goldGradient)" />
+    <path d="M66 14 L66 67" stroke="#F5EFE0" stroke-width="0.6" stroke-opacity="0.5" />
+    <path d="M20 72 C32 68 44 48 60 48 C72 48 80 56 80 56 C80 56 70 51 60 52 C45 53 32 72 20 72 Z" fill="url(#goldGradient)" />
+    <path d="M20 72 C35 70 47 50 63 49 C74 48 80 55 80 55" stroke="#FFF4D4" stroke-width="0.8" stroke-linecap="round" />
+  </g>
+  <text x="170" y="108" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="29" font-weight="600" letter-spacing="7" fill="url(#goldGradient)">TANMIYAT</text>
+  <text x="272" y="104" font-family="'Playfair Display', Georgia, serif" font-size="12" font-weight="500" letter-spacing="2" fill="#D8BE8A">LLC</text>
+  <text x="170" y="128" text-anchor="middle" font-family="'Manrope', sans-serif" font-size="8.5" font-weight="600" letter-spacing="5.5" fill="#C8C0B3">REAL ESTATE DEVELOPMENT</text>
+  <line x1="80" y1="144" x2="140" y2="144" stroke="#8C6F3B" stroke-width="0.75" />
+  <text x="170" y="147" text-anchor="middle" font-family="'Playfair Display', serif" font-size="10" font-weight="500" letter-spacing="3" fill="#D8BE8A">1999</text>
+  <line x1="200" y1="144" x2="260" y2="144" stroke="#8C6F3B" stroke-width="0.75" />
+</svg>
