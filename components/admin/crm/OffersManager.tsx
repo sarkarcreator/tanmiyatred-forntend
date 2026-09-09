@@ -51,11 +51,10 @@ export const OffersManager: React.FC<Props> = ({ initialOffers, onDealCreated })
               body: JSON.stringify({
                 propertyId: acceptedOffer.propertyId,
                 buyerName: acceptedOffer.buyerName,
-                buyerPhone: acceptedOffer.buyerPhone,
                 buyerEmail: acceptedOffer.buyerEmail,
                 sellerName: 'Tanmiyat Real Estate Development LLC',
                 finalPrice: acceptedOffer.offerAmount,
-                depositAmount: acceptedOffer.depositAmount || Math.round(acceptedOffer.offerAmount * 0.1),
+                depositAmount: Math.round(acceptedOffer.offerAmount * 0.1),
                 stage: 'AGREEMENT_SIGNED',
                 commissionTotal: Math.round(acceptedOffer.offerAmount * 0.02),
                 expectedClosingDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
@@ -79,7 +78,7 @@ export const OffersManager: React.FC<Props> = ({ initialOffers, onDealCreated })
           <div className="flex items-center gap-3">
             <h1 className="font-editorial text-3xl text-[#F5F2EB]">Offers & Negotiations</h1>
             <span className="px-2.5 py-0.5 bg-[#B79A62]/10 border border-[#B79A62]/30 text-[#B79A62] text-xs font-semibold">
-              {offers.filter((o) => o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW').length} Pending Review
+              {offers.filter((o) => o.status === 'SUBMITTED').length} Pending Review
             </span>
           </div>
           <p className="text-xs text-[#8C867E]">
@@ -95,10 +94,11 @@ export const OffersManager: React.FC<Props> = ({ initialOffers, onDealCreated })
           >
             <option value="ALL">All Offers</option>
             <option value="SUBMITTED">Submitted</option>
-            <option value="UNDER_REVIEW">Under Review</option>
+            <option value="COUNTERED">Countered</option>
             <option value="ACCEPTED">Accepted (Deal Created)</option>
             <option value="REJECTED">Rejected</option>
-            <option value="COUNTERED">Countered</option>
+            <option value="EXPIRED">Expired</option>
+            <option value="DRAFT">Draft</option>
           </select>
         </div>
       </div>
@@ -132,7 +132,7 @@ export const OffersManager: React.FC<Props> = ({ initialOffers, onDealCreated })
 
                   <td className="py-3.5 px-4">
                     <div className="font-medium text-[#F5F2EB]">{offer.buyerName}</div>
-                    <div className="text-[10px] text-[#7A756D]">{offer.buyerPhone}</div>
+                    <div className="text-[10px] text-[#7A756D]">{offer.buyerEmail || '—'}</div>
                   </td>
 
                   <td className="py-3.5 px-4">
@@ -142,20 +142,15 @@ export const OffersManager: React.FC<Props> = ({ initialOffers, onDealCreated })
 
                   <td className="py-3.5 px-4 font-editorial text-sm text-[#B79A62]">
                     AED {offer.offerAmount.toLocaleString()}
-                    {offer.depositAmount && (
-                      <span className="block text-[10px] text-[#7A756D] font-sans">
-                        Deposit: AED {offer.depositAmount.toLocaleString()}
-                      </span>
-                    )}
                   </td>
 
                   <td className="py-3.5 px-4">
                     <div className="uppercase text-[10px] font-semibold text-[#D8BE8A]">
-                      {offer.paymentMethod}
+                      {offer.currency}
                     </div>
-                    {offer.specialConditions && (
+                    {offer.conditions && (
                       <div className="text-[10px] text-[#7A756D] line-clamp-1">
-                        {offer.specialConditions}
+                        {offer.conditions}
                       </div>
                     )}
                   </td>
