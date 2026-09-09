@@ -31,8 +31,9 @@ export default function ContactPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const whatsAppNumber = '+971480082664';
-  const whatsAppUrl = `https://wa.me/${whatsAppNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+  const phoneNumber = '+971503490817';
+  const displayPhoneNumber = '+971-50-3490817';
+  const whatsAppUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
     'Hello Tanmiyat Real Estate Development. I would like to schedule a private consultation.'
   )}`;
 
@@ -110,8 +111,8 @@ export default function ContactPage() {
                     <Phone className="w-4 h-4 text-[#B79A62] shrink-0 mt-1" />
                     <div>
                       <strong className="block text-[#F5F2EB] mb-0.5">Telephone</strong>
-                      <a href="tel:+97143699000" className="text-[#8C867E] hover:text-[#B79A62]">
-                        +971 4 369 9000
+                      <a href={`tel:${phoneNumber}`} className="text-[#8C867E] hover:text-[#B79A62]">
+                        {displayPhoneNumber}
                       </a>
                     </div>
                   </div>
@@ -152,7 +153,7 @@ export default function ContactPage() {
                   </a>
 
                   <a
-                    href="tel:+97143699000"
+                    href={`tel:${phoneNumber}`}
                     className="w-full inline-flex items-center justify-center gap-2 py-3 bg-[#1F1D1A] border border-[#332F28] text-[#F5F2EB] text-xs font-semibold uppercase tracking-wider hover:border-[#B79A62] transition-colors"
                   >
                     <Phone className="w-4 h-4 text-[#B79A62]" />
