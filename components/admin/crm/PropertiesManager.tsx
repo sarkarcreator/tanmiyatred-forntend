@@ -271,7 +271,7 @@ export const PropertiesManager: React.FC<Props> = ({ initialProperties, agents }
                   <div className="flex items-center gap-3">
                     <div className="relative w-12 h-10 bg-[#0A0A09] border border-[#25221E] overflow-hidden shrink-0">
                       <Image
-                        src={prop.featuredImage}
+                        src={prop.featuredImage || prop.heroImage}
                         alt={prop.title}
                         fill
                         className="object-cover"
