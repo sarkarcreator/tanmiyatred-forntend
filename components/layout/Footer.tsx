@@ -9,8 +9,9 @@ import { MapPin, Phone, Mail, Clock, MessageSquare, ArrowUpRight } from 'lucide-
 export const Footer: React.FC = () => {
   const { t, isRTL } = useI18n();
 
-  const whatsAppNumber = '+971480082664';
-  const whatsAppUrl = `https://wa.me/${whatsAppNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+  const phoneNumber = '+971503490817';
+  const displayPhoneNumber = '+971-50-3490817';
+  const whatsAppUrl = `https://wa.me/${phoneNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
     'Hello Tanmiyat Real Estate Development. I would like to inquire about your property portfolio.'
   )}`;
 
@@ -146,8 +147,8 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#B79A62] shrink-0" />
-                <a href="tel:+97143699000" className="hover:text-[#F5F2EB] transition-colors">
-                  +971 4 369 9000
+                <a href={`tel:${phoneNumber}`} className="hover:text-[#F5F2EB] transition-colors">
+                  {displayPhoneNumber}
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
