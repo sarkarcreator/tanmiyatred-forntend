@@ -5,7 +5,7 @@ import type {
   DocumentRecord,
 } from '@/types';
 
-const API_BASE = (process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -85,7 +85,7 @@ export const repository = {
   async createViewing(data:Omit<ViewingItem,'id'|'createdAt'>,userEmail?:string):Promise<ViewingItem>{return request('/viewings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,userEmail})})},
   async updateViewingStatus(id:string,status:ViewingItem['status'],notes?:string,userEmail?:string):Promise<ViewingItem|null>{try{return await request(`/viewings/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status,notes,userEmail})})}catch{return null}},
   async getOffers(filter?:Record<string,unknown>):Promise<OfferItem[]>{const p=new URLSearchParams();for(const[k,v]of Object.entries(filter||{}))if(v)p.set(k,String(v));return request(`/offers${p.toString()?`?${p}`:''}`)},
-  async createOffer(data:Omit<OfferItem,'id'|'createdAt'>,userEmail?:string):Promise<OfferItem>{return request('/offers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,userEmail})})},
+  async createOffer(data:Omit<OfferItem,'id'|'createdAt'>,userEmail?:string):Promise<OfferItem>{return request('/offers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})},
   async updateOfferStatus(id:string,status:OfferItem['status'],notes?:string,userEmail?:string):Promise<OfferItem|null>{try{return await request(`/offers/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status,notes,userEmail})})}catch{return null}},
   async getDeals(filter?:Record<string,unknown>):Promise<DealItem[]>{const p=new URLSearchParams();for(const[k,v]of Object.entries(filter||{}))if(v)p.set(k,String(v));return request(`/deals${p.toString()?`?${p}`:''}`)},
   async createDeal(data:Omit<DealItem,'id'|'createdAt'>,userEmail?:string):Promise<DealItem>{return request('/deals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,userEmail})})},
