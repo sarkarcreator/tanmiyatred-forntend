@@ -26,7 +26,7 @@ export const repository = {
   async getProjectBySlug(slug: string): Promise<ProjectItem | null> { try { return await request<ProjectItem>(`/projects/${encodeURIComponent(slug)}`); } catch { return null; } },
   async getProjectById(id: string): Promise<ProjectItem | null> { try { return await request<ProjectItem>(`/projects/${encodeURIComponent(id)}`); } catch { return null; } },
   async createProject(data: Omit<ProjectItem,'id'>): Promise<ProjectItem> { return request('/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); },
-  async updateProject(id:string,updates:Partial<ProjectItem>):Promise<ProjectItem|null>{return request(`/projects/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(updates)}).catch(()=>null)},
+  async updateProject(id:string,updates:Partial<ProjectItem>):Promise<ProjectItem|null>{return request<ProjectItem>(`/projects/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(updates)}).catch(()=>null)},
   async deleteProject(id:string):Promise<boolean>{await request(`/projects/${id}`,{method:'DELETE'});return true;},
 
   async getUnitsByProject(projectId:string):Promise<UnitItem[]>{return request(`/units?projectId=${encodeURIComponent(projectId)}`)},
