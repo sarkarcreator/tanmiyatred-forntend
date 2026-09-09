@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { OfferItem, OfferStatus } from '@/types';
+import { OfferItem } from '@/types';
 import {
   FileText,
   DollarSign,
@@ -12,6 +12,8 @@ import {
   ArrowRight,
   Handshake,
 } from 'lucide-react';
+
+type OfferStatus = OfferItem['status'];
 
 interface Props {
   initialOffers: OfferItem[];
