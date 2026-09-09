@@ -5,7 +5,8 @@ import type {
   DocumentRecord,
 } from '@/types';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
+const configuredApiBase = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_API_URL;
+const API_BASE = (configuredApiBase || (process.env.NODE_ENV === 'production' ? 'https://api.tanmiyatrealestate.com/api' : 'http://localhost:4000/api')).replace(/\/$/, '');
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
@@ -73,7 +74,7 @@ export const repository = {
   async getOwners():Promise<OwnerItem[]>{return request('/owners')},
   async getOwnerById(id:string):Promise<OwnerItem|null>{try{return await request(`/owners/${id}`)}catch{return null}},
   async createOwner(data:Omit<OwnerItem,'id'|'createdAt'>,userEmail?:string):Promise<OwnerItem>{return request('/owners',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,userEmail})})},
-  async updateOwner(id:string,updates:Partial<OwnerItem>):Promise<OwnerItem|null>{try{return await request(`/owners/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(updates)})}catch{return null}},
+  async updateOwner(id:string,updates:Partial<OwnerItem>):Promise<OwnerItem|null>{try{return await request(`/owners/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(updates)}).catch(()=>null)},
   async getCustomers(filter?:{type?:string;agentId?:string}):Promise<CustomerItem[]>{const p=new URLSearchParams();for(const[k,v]of Object.entries(filter||{}))if(v)p.set(k,String(v));return request(`/customers${p.toString()?`?${p}`:''}`)},
   async createCustomer(data:Omit<CustomerItem,'id'|'createdAt'>,userEmail?:string):Promise<CustomerItem>{return request('/customers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,userEmail})})},
   async getLeads(filter?:Record<string,unknown>):Promise<LeadItem[]>{const p=new URLSearchParams();for(const[k,v]of Object.entries(filter||{}))if(v)p.set(k,String(v));return request(`/leads${p.toString()?`?${p}`:''}`)},
