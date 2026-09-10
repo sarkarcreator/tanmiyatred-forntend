@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ProjectItem, InquiryItem, TimelineItem, NewsItem, PropertyItem, LeadItem, AgentItem,
   ViewingItem, OfferItem, DealItem, CommissionItem,
@@ -35,6 +35,7 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
   initialDeals = [], initialCommissions = [],
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -70,6 +71,23 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
     setDeals(data.deals || []); setCommissions(data.commissions || []);
   };
 
+  useEffect(() => {
+    let active = true;
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then(async (res) => {
+        if (!active) return;
+        if (res.ok) {
+          setIsAuthenticated(true);
+          await loadAdminData();
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setAuthChecking(false);
+      });
+    return () => { active = false; };
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setAuthError('');
     try {
@@ -92,6 +110,8 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const link = document.createElement('a'); link.setAttribute('href', encodeURI(csvContent)); link.setAttribute('download', `tanmiyat_leads_${new Date().toISOString().slice(0, 10)}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
+
+  if (authChecking) return <div className="min-h-screen bg-[#0A0A09] flex items-center justify-center p-6 text-[#B79A62] text-xs uppercase tracking-[0.2em]">Restoring secure session…</div>;
 
   if (!isAuthenticated) return (
     <div className="min-h-screen bg-[#0A0A09] flex items-center justify-center p-4"><div className="w-full max-w-md bg-[#171715] border border-[#25221E] p-8 sm:p-10 space-y-6">
