@@ -24,6 +24,33 @@
     color: #0A0A09;
   }
 
+  /* Keep native form controls readable on the dark luxury UI.
+     Windows/browser native select menus can otherwise render white
+     backgrounds with low-contrast text even when the select itself is dark. */
+  input,
+  textarea,
+  select,
+  button {
+    color-scheme: dark;
+  }
+
+  select {
+    background-color: #0A0A09;
+    color: #F5F2EB;
+  }
+
+  select option,
+  select optgroup {
+    background-color: #171715;
+    color: #F5F2EB;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #7A756D;
+    opacity: 1;
+  }
+
   /* Custom subtle scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
