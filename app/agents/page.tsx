@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import { repository } from '@/lib/data/repository';
 import { AgentsDirectoryClient } from '@/components/marketplace/AgentsDirectoryClient';
+import { BackToHome } from '@/components/layout/BackToHome';
 
 export const metadata: Metadata = {
   title: 'Licensed Real Estate Advisors & Brokers in Dubai | Tanmiyat',
@@ -17,6 +18,9 @@ export default async function AgentsPage() {
 
   return (
     <main className="min-h-screen bg-[#0A0A09] text-[#F5F2EB] pt-24 pb-20">
+      <div className="mx-auto max-w-7xl px-4 pb-5 sm:px-6 lg:px-8">
+        <BackToHome />
+      </div>
       <AgentsDirectoryClient agents={agents} properties={allPropertiesResult.properties} />
     </main>
   );
