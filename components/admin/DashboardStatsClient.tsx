@@ -81,6 +81,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 }) => {
   const hasPropData = propTotalProjects !== undefined && propTotalInquiries !== undefined && propActiveUnits !== undefined;
   const [fetchedStats, setFetchedStats] = useState<DashboardStatsData | null>(null);
+  const [activeDealsPipelineValue, setActiveDealsPipelineValue] = useState<number | null>(null);
   const [loading, setLoading] = useState(!hasPropData && !initialStats && autoFetch);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +97,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
         activeListings: propActiveListings ?? fetchedStats?.activeListings,
         upcomingViewings: propUpcomingViewings ?? fetchedStats?.upcomingViewings,
         totalDeals: fetchedStats?.totalDeals,
-        dealPipelineValue: propDealPipelineValue ?? fetchedStats?.dealPipelineValue,
+        dealPipelineValue: propDealPipelineValue ?? activeDealsPipelineValue ?? fetchedStats?.dealPipelineValue,
         totalCommissions: propTotalCommissions ?? fetchedStats?.totalCommissions,
         lastUpdated: fetchedStats?.lastUpdated || new Date().toISOString(),
       }
@@ -107,7 +108,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   useEffect(() => {
     let active = true;
     if (autoFetch && !hasPropData && !initialStats) {
-      fetch(endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store' })
+      fetch(endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store', credentials: 'include' })
         .then(async (res) => {
           if (!res.ok) throw new Error(`Server responded with status ${res.status}`);
           return res.json();
@@ -128,15 +129,44 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
     return () => { active = false; };
   }, [autoFetch, hasPropData, initialStats, endpoint]);
 
+  useEffect(() => {
+    let active = true;
+    if (!autoFetch || !hasPropData || propDealPipelineValue !== undefined) return () => { active = false; };
+    fetch('/api/deals', { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store', credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Deals endpoint responded with status ${res.status}`);
+        return res.json();
+      })
+      .then((json) => {
+        if (!active || !json.success || !Array.isArray(json.data)) return;
+        const pipelineValue = json.data
+          .filter((deal: { status?: string }) => deal.status !== 'COMPLETED' && deal.status !== 'CANCELLED')
+          .reduce((sum: number, deal: { dealValue?: number; finalPrice?: number }) => sum + (Number(deal.dealValue ?? deal.finalPrice) || 0), 0);
+        setActiveDealsPipelineValue(pipelineValue);
+      })
+      .catch(() => { if (active) setActiveDealsPipelineValue(0); });
+    return () => { active = false; };
+  }, [autoFetch, hasPropData, propDealPipelineValue]);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     setError(null);
     try {
-      const response = await fetch(endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store' });
+      const response = await fetch(endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store', credentials: 'include' });
       if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
       const json = await response.json();
       if (json.success && json.data) setFetchedStats(json.data);
       else throw new Error(json.error || 'Failed to parse statistics payload');
+      const dealsResponse = await fetch('/api/deals', { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store', credentials: 'include' });
+      if (dealsResponse.ok) {
+        const dealsJson = await dealsResponse.json();
+        if (dealsJson.success && Array.isArray(dealsJson.data)) {
+          const pipelineValue = dealsJson.data
+            .filter((deal: { status?: string }) => deal.status !== 'COMPLETED' && deal.status !== 'CANCELLED')
+            .reduce((sum: number, deal: { dealValue?: number; finalPrice?: number }) => sum + (Number(deal.dealValue ?? deal.finalPrice) || 0), 0);
+          setActiveDealsPipelineValue(pipelineValue);
+        }
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Network error while refreshing metrics');
     } finally {
