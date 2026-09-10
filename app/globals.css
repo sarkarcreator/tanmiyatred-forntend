@@ -143,8 +143,7 @@ button[title="Delete"]:hover {
   transform: translateY(-1px);
 }
 
-/* Property create/edit modal shell. The selector mirrors the existing modal
-   structure so no CRUD or API code needs to change. */
+/* Property create/edit modal shell. */
 div.fixed.inset-0.z-50.bg-black\/85 > div {
   border-color: #383229;
   border-radius: 14px;
@@ -176,7 +175,6 @@ div.fixed.inset-0.z-50.bg-black\/85 > div > div:first-child button:hover {
   color: #F5F2EB;
 }
 
-/* Make the edit form easier to scan without changing its existing controls. */
 div.fixed.inset-0.z-50.bg-black\/85 .label {
   color: #AAA297;
   font-weight: 600;
@@ -201,7 +199,172 @@ div.fixed.inset-0.z-50.bg-black\/85 .field-input:focus {
   box-shadow: 0 0 0 3px rgba(183,154,98,.08);
 }
 
-/* Media cards inside CRM edit modal. */
-div.fixed.inset-0.z-50.bg-black\/85 .field-input + * {
-  max-width: 100%;
+/* CRM Leads & Deal Pipeline — premium dashboard treatment. */
+/* The Leads component already uses consistent Tailwind utility classes; these
+   selectors enhance the visual hierarchy without changing data or behaviour. */
+
+/* Pipeline page header and toolbar. */
+div.space-y-6 > div:first-child h1 {
+  letter-spacing: -0.025em;
+  text-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+div.space-y-6 > div:first-child .text-xs.text-\[\#8C867E\] {
+  margin-top: 5px;
+  line-height: 1.6;
+}
+
+div.space-y-6 > div:first-child > div:last-child button {
+  min-height: 38px;
+  border-radius: 8px;
+  transition: transform .18s ease, border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+
+div.space-y-6 > div:first-child > div:last-child button:hover {
+  transform: translateY(-1px);
+}
+
+div.space-y-6 > div:first-child > div:last-child button:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-left: 15px;
+  padding-right: 15px;
+  box-shadow: 0 8px 24px rgba(183,154,98,.12);
+}
+
+/* Search/filter bar. */
+div.space-y-6 > div:nth-child(2) {
+  border-radius: 10px;
+  background: linear-gradient(180deg,#191917 0%,#151513 100%);
+  box-shadow: 0 12px 35px rgba(0,0,0,.18);
+}
+
+div.space-y-6 > div:nth-child(2) input,
+div.space-y-6 > div:nth-child(2) select {
+  min-height: 40px;
+  border-radius: 7px;
+  border-color: #302D27;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+div.space-y-6 > div:nth-child(2) input:focus,
+div.space-y-6 > div:nth-child(2) select:focus {
+  border-color: #8D774B;
+  box-shadow: 0 0 0 3px rgba(183,154,98,.07);
+  outline: none;
+}
+
+/* View switcher and export controls. */
+div.space-y-6 > div:first-child > div:last-child > div:first-child {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+div.space-y-6 > div:first-child > div:last-child > div:first-child button {
+  min-height: 32px;
+  border-radius: 5px;
+}
+
+/* Kanban columns. */
+div.space-y-6 > div.flex.gap-4.overflow-x-auto > div {
+  border-radius: 11px;
+  border-color: #2C2924;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.015), 0 12px 35px rgba(0,0,0,.12);
+}
+
+div.space-y-6 > div.flex.gap-4.overflow-x-auto > div > div:first-child {
+  background: linear-gradient(180deg,#1A1A17 0%,#171715 100%);
+}
+
+div.space-y-6 > div.flex.gap-4.overflow-x-auto > div > div:first-child > div:first-child h3 {
+  font-size: 10px;
+  letter-spacing: .12em;
+}
+
+/* Lead cards. */
+div.space-y-6 > div.flex.gap-4.overflow-x-auto > div > div:nth-child(2) > div:not(.text-center) {
+  border-radius: 9px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.14);
+  transition: transform .18s ease, border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+
+div.space-y-6 > div.flex.gap-4.overflow-x-auto > div > div:nth-child(2) > div:not(.text-center):hover {
+  transform: translateY(-2px);
+  background: #1A1916;
+  box-shadow: 0 12px 28px rgba(0,0,0,.22);
+}
+
+/* Pipeline stage selectors. */
+div.space-y-6 > div.flex.gap-4.overflow-x-auto select {
+  min-height: 28px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Table view. */
+div.space-y-6 > div.bg-\[\#171715\].border.border-\[\#25221E\].overflow-x-auto {
+  border-radius: 10px;
+  box-shadow: 0 12px 35px rgba(0,0,0,.16);
+}
+
+div.space-y-6 > div.bg-\[\#171715\].border.border-\[\#25221E\].overflow-x-auto table thead {
+  letter-spacing: .08em;
+}
+
+div.space-y-6 > div.bg-\[\#171715\].border.border-\[\#25221E\].overflow-x-auto tbody tr {
+  transition: background-color .16s ease;
+}
+
+div.space-y-6 > div.bg-\[\#171715\].border.border-\[\#25221E\].overflow-x-auto tbody td {
+  vertical-align: middle;
+}
+
+/* Lead detail drawer. */
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div {
+  border-left-color: #3A342B;
+  background: linear-gradient(180deg,#151513 0%,#10100F 100%);
+  box-shadow: -25px 0 80px rgba(0,0,0,.48);
+}
+
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div > div:first-child {
+  padding-bottom: 17px;
+  border-bottom: 1px solid #2A2722;
+}
+
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div > div:first-child h2 {
+  letter-spacing: -.015em;
+}
+
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div select,
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div textarea {
+  border-radius: 7px;
+  border-color: #302D27;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div select:focus,
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div textarea:focus {
+  border-color: #8D774B;
+  box-shadow: 0 0 0 3px rgba(183,154,98,.07);
+  outline: none;
+}
+
+div.fixed.inset-0.z-50.flex.justify-end.bg-black\/50 > div textarea {
+  line-height: 1.55;
+}
+
+/* Responsive refinement for smaller screens. */
+@media (max-width: 640px) {
+  div.space-y-6 > div:first-child h1 {
+    font-size: 1.8rem;
+  }
+
+  div.space-y-6 > div:nth-child(2) {
+    padding: 12px;
+  }
+
+  div.space-y-6 > div.flex.gap-4.overflow-x-auto > div {
+    width: 84vw;
+  }
 }
