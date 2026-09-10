@@ -24,9 +24,6 @@
     color: #0A0A09;
   }
 
-  /* Keep native form controls readable on the dark luxury UI.
-     Windows/browser native select menus can otherwise render white
-     backgrounds with low-contrast text even when the select itself is dark. */
   input,
   textarea,
   select,
@@ -51,7 +48,6 @@
     opacity: 1;
   }
 
-  /* Custom subtle scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -68,7 +64,6 @@
   }
 }
 
-/* Luxury Editorial Typography utilities */
 .font-editorial {
   font-family: var(--font-playfair), 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
 }
@@ -81,7 +76,6 @@
   font-family: 'Noto Sans Arabic', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Subtle luxury gold border accent */
 .border-gold-subtle {
   border-color: rgba(183, 154, 98, 0.25);
 }
@@ -90,7 +84,6 @@
   border-color: rgba(183, 154, 98, 0.55);
 }
 
-/* Cinematic film grain or dark backdrop */
 .bg-obsidian {
   background-color: #0A0A09;
 }
@@ -109,4 +102,106 @@
 
 .text-stone {
   color: #C8C0B3;
+}
+
+/* CRM property actions: keep the edit/delete controls visually intentional. */
+button[title="Edit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(183,154,98,.38);
+  border-radius: 7px;
+  background: rgba(183,154,98,.08);
+  color: #D8BE8A;
+  transition: all .18s ease;
+}
+
+button[title="Edit"]:hover {
+  border-color: #B79A62;
+  background: rgba(183,154,98,.16);
+  color: #F5F2EB;
+  transform: translateY(-1px);
+}
+
+button[title="Delete"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(180,80,80,.28);
+  border-radius: 7px;
+  background: rgba(130,45,45,.08);
+  transition: all .18s ease;
+}
+
+button[title="Delete"]:hover {
+  border-color: rgba(220,120,120,.55);
+  background: rgba(130,45,45,.16);
+  transform: translateY(-1px);
+}
+
+/* Property create/edit modal shell. The selector mirrors the existing modal
+   structure so no CRUD or API code needs to change. */
+div.fixed.inset-0.z-50.bg-black\/85 > div {
+  border-color: #383229;
+  border-radius: 14px;
+  box-shadow: 0 30px 100px rgba(0,0,0,.62), 0 0 0 1px rgba(183,154,98,.035);
+}
+
+div.fixed.inset-0.z-50.bg-black\/85 > div > div:first-child {
+  padding: 18px 22px;
+  border-bottom-color: #302C25;
+  background: linear-gradient(180deg,#191916 0%,#151512 100%);
+}
+
+div.fixed.inset-0.z-50.bg-black\/85 > div > div:first-child h2 {
+  letter-spacing: -.01em;
+}
+
+div.fixed.inset-0.z-50.bg-black\/85 > div > div:first-child button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #373229;
+  border-radius: 8px;
+  color: #918A80;
+  transition: all .18s ease;
+}
+
+div.fixed.inset-0.z-50.bg-black\/85 > div > div:first-child button:hover {
+  border-color: #6A5838;
+  background: #211E18;
+  color: #F5F2EB;
+}
+
+/* Make the edit form easier to scan without changing its existing controls. */
+div.fixed.inset-0.z-50.bg-black\/85 .label {
+  color: #AAA297;
+  font-weight: 600;
+}
+
+div.fixed.inset-0.z-50.bg-black\/85 .field-input {
+  min-height: 42px;
+  border-color: #302D27;
+  border-radius: 7px;
+  background: #0C0C0B;
+  color: #F5F2EB;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+div.fixed.inset-0.z-50.bg-black\/85 .field-input:hover {
+  border-color: #454037;
+  background: #10100E;
+}
+
+div.fixed.inset-0.z-50.bg-black\/85 .field-input:focus {
+  border-color: #8D774B;
+  box-shadow: 0 0 0 3px rgba(183,154,98,.08);
+}
+
+/* Media cards inside CRM edit modal. */
+div.fixed.inset-0.z-50.bg-black\/85 .field-input + * {
+  max-width: 100%;
 }
