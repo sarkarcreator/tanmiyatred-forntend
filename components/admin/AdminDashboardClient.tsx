@@ -9,6 +9,7 @@ import { TanmiyatLogo } from '@/components/brand/TanmiyatLogo';
 import { DashboardStats, DashboardStatType } from '@/components/admin/DashboardStats';
 import { LeadsKanban } from '@/components/admin/crm/LeadsKanban';
 import { PropertiesManager } from '@/components/admin/crm/PropertiesManager';
+import { AgentsManager } from '@/components/admin/crm/AgentsManager';
 import { ViewingsManager } from '@/components/admin/crm/ViewingsManager';
 import { OffersManager } from '@/components/admin/crm/OffersManager';
 import { DealsManager } from '@/components/admin/crm/DealsManager';
@@ -26,7 +27,7 @@ interface AdminDashboardClientProps {
   initialDeals?: DealItem[]; initialCommissions?: CommissionItem[];
 }
 
-export type AdminTab = 'OVERVIEW' | 'LEADS_CRM' | 'PROPERTIES' | 'VIEWINGS' | 'OFFERS' | 'DEALS' | 'COMMISSIONS' | 'DEVELOPMENTS' | 'UNITS' | 'TIMELINE' | 'NEWS' | 'USERS';
+export type AdminTab = 'OVERVIEW' | 'LEADS_CRM' | 'PROPERTIES' | 'AGENTS' | 'VIEWINGS' | 'OFFERS' | 'DEALS' | 'COMMISSIONS' | 'DEVELOPMENTS' | 'UNITS' | 'TIMELINE' | 'NEWS' | 'USERS';
 
 export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
   initialProjects, initialInquiries, initialTimeline, initialNews, initialProperties = [],
@@ -105,6 +106,7 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       { id: 'OVERVIEW' as AdminTab, label: 'Overview', icon: LayoutDashboard },
       { id: 'LEADS_CRM' as AdminTab, label: 'CRM Leads & Pipeline', icon: Inbox, count: leads.length || inquiries.length },
       { id: 'PROPERTIES' as AdminTab, label: 'Listing Properties', icon: Building, count: properties.length },
+      { id: 'AGENTS' as AdminTab, label: 'Agents & Advisors', icon: Users, count: agents.length },
       { id: 'VIEWINGS' as AdminTab, label: 'Private Viewings', icon: Calendar, count: viewings.filter((v) => v.status === 'CONFIRMED' || v.status === 'REQUESTED').length },
       { id: 'OFFERS' as AdminTab, label: 'Offers & Negotiations', icon: FileCheck, count: offers.filter((o) => o.status === 'SUBMITTED').length },
       { id: 'DEALS' as AdminTab, label: 'Deals & Conveyancing', icon: Handshake, count: deals.length },
@@ -123,6 +125,7 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
     {activeTab === 'OVERVIEW' && <div className="space-y-8"><div><h1 className="font-editorial text-3xl text-[#F5F2EB]">Executive Overview</h1><p className="text-xs text-[#8C867E]">Real-time portfolio metrics, CRM leads velocity, marketplace listings, and escrow pipeline.</p></div><DashboardStats totalProjects={projects.length} newInquiries={inquiries.filter((i) => i.status === 'NEW').length} totalInquiries={inquiries.length} activeUnits={allUnits.filter((u) => u.status === 'AVAILABLE').length} totalUnits={allUnits.length} activeLeads={leads.length || inquiries.length} activeListings={properties.length} upcomingViewings={viewings.filter((v) => v.status === 'CONFIRMED' || v.status === 'REQUESTED').length} onStatClick={(type: DashboardStatType) => { if (type === 'PROJECTS') setActiveTab('DEVELOPMENTS'); else if (type === 'LEADS' || type === 'INQUIRIES') setActiveTab('LEADS_CRM'); else if (type === 'PROPERTIES' || type === 'UNITS') setActiveTab('PROPERTIES'); else if (type === 'VIEWINGS') setActiveTab('VIEWINGS'); else if (type === 'DEALS') setActiveTab('DEALS'); else if (type === 'COMMISSIONS') setActiveTab('COMMISSIONS'); else if (type === 'HERITAGE') setActiveTab('TIMELINE'); }} /></div>}
     {activeTab === 'LEADS_CRM' && <LeadsKanban initialLeads={leads} agents={agents} />}
     {activeTab === 'PROPERTIES' && <PropertiesManager initialProperties={properties} agents={agents} />}
+    {activeTab === 'AGENTS' && <AgentsManager agents={agents} onAgentsChange={setAgents} />}
     {activeTab === 'VIEWINGS' && <ViewingsManager initialViewings={viewings} />}
     {activeTab === 'OFFERS' && <OffersManager initialOffers={offers} onDealCreated={() => setActiveTab('DEALS')} />}
     {activeTab === 'DEALS' && <DealsManager initialDeals={deals} />}
