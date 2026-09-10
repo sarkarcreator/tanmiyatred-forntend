@@ -1,0 +1,50 @@
+name: Patch admin refresh auth
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'fix: persist admin auth across refresh') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch admin session bootstrap
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('components/admin/AdminDashboardClient.tsx')
+          s = p.read_text(encoding='utf-8')
+          old_import = "import React, { useState } from 'react';"
+          new_import = "import React, { useEffect, useState } from 'react';"
+          if old_import not in s:
+              raise SystemExit('React import pattern not found')
+          s = s.replace(old_import, new_import, 1)
+          old_state = "  const [isAuthenticated, setIsAuthenticated] = useState(false);"
+          new_state = old_state + "\n  const [authChecking, setAuthChecking] = useState(true);"
+          if old_state not in s:
+              raise SystemExit('auth state pattern not found')
+          s = s.replace(old_state, new_state, 1)
+          marker = "  const loadAdminData = async () => {"
+          bootstrap = "  useEffect(() => {\n    let active = true;\n    fetch('/api/auth/me', { cache: 'no-store' })\n      .then(async (res) => {\n        if (!active) return;\n        if (res.ok) {\n          setIsAuthenticated(true);\n          await loadAdminData();\n        }\n      })\n      .catch(() => {})\n      .finally(() => { if (active) setAuthChecking(false); });\n    return () => { active = false; };\n  }, []);\n\n"
+          if marker not in s:
+              raise SystemExit('loadAdminData marker not found')
+          s = s.replace(marker, bootstrap + marker, 1)
+          old_guard = "  if (!isAuthenticated) return ("
+          new_guard = "  if (authChecking) return <div className=\"min-h-screen bg-[#0A0A09] flex items-center justify-center p-6 text-[#B79A62] text-xs uppercase tracking-[0.2em]\">Restoring secure session…</div>;\n\n  if (!isAuthenticated) return ("
+          if old_guard not in s:
+              raise SystemExit('auth guard pattern not found')
+          s = s.replace(old_guard, new_guard, 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/admin/AdminDashboardClient.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: persist admin auth across refresh"
+          git push
