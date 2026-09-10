@@ -50,11 +50,6 @@ export default async function AgentDetailPage({ params }: PageProps) {
 
   const { agent, properties } = result;
 
-  const propertiesResult = await repository.getProperties({
-    agentId: agent.id,
-    isPublic: true,
-  });
-
   return (
     <main className="min-h-screen bg-[#0A0A09] text-[#F5F2EB] pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
@@ -129,7 +124,7 @@ export default async function AgentDetailPage({ params }: PageProps) {
                 </div>
                 <div>
                   <span className="text-[10px] uppercase text-[#7A756D] block">Active Listings</span>
-                  <span className="text-[#F5F2EB]">{propertiesResult.properties.length} Properties</span>
+                  <span className="text-[#F5F2EB]">{properties.length} Properties</span>
                 </div>
                 <div>
                   <span className="text-[10px] uppercase text-[#7A756D] block">Direct Contact</span>
@@ -158,98 +153,76 @@ export default async function AgentDetailPage({ params }: PageProps) {
                 </a>
 
                 <a
-                  href={`mailto:${agent.email}?subject=Property%20Inquiry%20-%20Tanmiyat`}
-                  className="px-5 py-2.5 bg-[#171715] hover:bg-[#25221E] text-[#C8C0B3] text-xs uppercase tracking-wider inline-flex items-center gap-2 border border-[#25221E] transition-colors"
+                  href={`mailto:${agent.email}`}
+                  className="px-5 py-2.5 bg-[#25221E] hover:bg-[#322E29] text-[#F5F2EB] font-semibold text-xs uppercase tracking-wider inline-flex items-center gap-2 border border-[#3A3731] transition-colors"
                 >
-                  <Mail className="w-4 h-4" />
-                  <span>Email</span>
+                  <Mail className="w-4 h-4 text-[#B79A62]" />
+                  <span>Email Advisor</span>
                 </a>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ACTIVE LISTINGS OF THIS AGENT */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-[#25221E] pb-4">
+        {/* LISTINGS */}
+        <section>
+          <div className="flex items-end justify-between gap-4 mb-6">
             <div>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-[#B79A62] font-semibold block">
-                Exclusive Portfolio
-              </span>
-              <h2 className="font-editorial text-2xl sm:text-3xl text-[#F5F2EB]">
-                Current Listings Represented by {agent.name}
-              </h2>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-[#B79A62] mb-2">Private Portfolio</p>
+              <h2 className="font-editorial text-3xl text-[#F5F2EB]">Current Listings</h2>
             </div>
-            <span className="text-xs text-[#8C867E]">
-              {propertiesResult.properties.length} Residences
-            </span>
+            <Link href="/properties" className="text-xs uppercase tracking-wider text-[#B79A62] hover:underline inline-flex items-center gap-1">
+              View All <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
-          {propertiesResult.properties.length === 0 ? (
-            <div className="text-center py-12 bg-[#171715] border border-[#25221E] text-[#8C867E] text-sm">
-              Currently, all listings assigned to this advisor are under offer or in off-market escrow.
+          {properties.length === 0 ? (
+            <div className="bg-[#171715] border border-[#25221E] p-10 text-center text-sm text-[#8C867E]">
+              No active public listings are currently assigned to this advisor.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {propertiesResult.properties.map((property) => (
-                <article
+              {properties.map((property) => (
+                <Link
                   key={property.id}
-                  className="group bg-[#171715] border border-[#25221E] hover:border-[#B79A62]/40 transition-all flex flex-col justify-between overflow-hidden"
+                  href={`/properties/${property.slug}`}
+                  className="group bg-[#171715] border border-[#25221E] overflow-hidden hover:border-[#B79A62]/50 transition-all"
                 >
-                  <div className="relative aspect-[16/10] overflow-hidden bg-[#0A0A09]">
-                    <Image
-                      src={property.featuredImage || property.heroImage || property.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'}
-                      alt={property.title}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#B79A62] text-[10px] font-bold text-[#0A0A09] uppercase">
+                  <div className="relative aspect-[4/3] bg-[#0A0A09] overflow-hidden">
+                    {property.heroImage ? (
+                      <Image
+                        src={property.heroImage}
+                        alt={property.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-700"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : null}
+                    <div className="absolute top-3 left-3 bg-[#0A0A09]/90 border border-[#B79A62]/50 px-2 py-1 text-[10px] uppercase tracking-wider text-[#B79A62]">
                       {property.purpose === 'FOR_RENT' ? 'For Rent' : 'For Sale'}
                     </div>
                   </div>
-
                   <div className="p-5 space-y-3">
-                    <span className="text-[10px] uppercase text-[#8C867E] block">{property.community}</span>
-                    <Link href={`/properties/${property.slug}`}>
-                      <h3 className="font-editorial text-lg text-[#F5F2EB] group-hover:text-[#B79A62] transition-colors line-clamp-1">
-                        {property.title}
-                      </h3>
-                    </Link>
-
-                    <div className="font-editorial text-xl text-[#F5F2EB]">
-                      AED {property.price.toLocaleString()}
+                    <h3 className="font-editorial text-xl text-[#F5F2EB] group-hover:text-[#B79A62] transition-colors line-clamp-2">
+                      {property.title}
+                    </h3>
+                    <div className="flex items-center gap-3 text-[11px] text-[#8C867E]">
+                      <span className="inline-flex items-center gap-1"><Building className="w-3.5 h-3.5" />{property.propertyType}</span>
+                      <span className="inline-flex items-center gap-1"><Bed className="w-3.5 h-3.5" />{property.bedrooms}</span>
+                      <span className="inline-flex items-center gap-1"><Bath className="w-3.5 h-3.5" />{property.bathrooms}</span>
+                      <span className="inline-flex items-center gap-1"><Maximize className="w-3.5 h-3.5" />{property.area.toLocaleString()} sqft</span>
                     </div>
-
-                    <div className="grid grid-cols-3 gap-2 py-2 border-y border-[#22201C] text-xs text-[#8C867E]">
-                      <div className="flex items-center gap-1">
-                        <Bed className="w-3.5 h-3.5 text-[#B79A62]" />
-                        <span>{property.bedrooms} Beds</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Bath className="w-3.5 h-3.5 text-[#B79A62]" />
-                        <span>{property.bathrooms} Baths</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Maximize className="w-3.5 h-3.5 text-[#B79A62]" />
-                        <span>{property.area.toLocaleString()} sqft</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <Link
-                        href={`/properties/${property.slug}`}
-                        className="w-full py-2 bg-[#25221E] hover:bg-[#B79A62] hover:text-[#0A0A09] text-xs uppercase tracking-wider text-center text-[#E5DFD5] block transition-colors"
-                      >
-                        View Residence Details
-                      </Link>
+                    <div className="pt-2 border-t border-[#25221E] flex items-center justify-between">
+                      <span className="text-sm font-semibold text-[#F5F2EB]">AED {property.price.toLocaleString()}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-[#B79A62] inline-flex items-center gap-1">Details <ArrowUpRight className="w-3 h-3" /></span>
                     </div>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
     </main>
   );
