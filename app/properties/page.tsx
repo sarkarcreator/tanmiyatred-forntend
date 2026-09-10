@@ -1,17 +1,15 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { repository } from '@/lib/data/repository';
-import { PropertiesMarketplaceClient } from '@/components/marketplace/PropertiesMarketplaceClient';
+import { PropertiesMarketplaceClientV2 } from '@/components/marketplace/PropertiesMarketplaceClientV2';
 import { BackToHome } from '@/components/layout/BackToHome';
 
 export const metadata: Metadata = {
   title: 'Luxury Properties For Sale & Rent in Dubai | Tanmiyat Real Estate',
-  description:
-    'Explore curated penthouses, signature villas, and waterfront residences across Business Bay, Dubailand, and prime Dubai locations. 100% RERA verified.',
+  description: 'Explore curated penthouses, signature villas, and waterfront residences across Business Bay, Dubailand, and prime Dubai locations. 100% RERA verified.',
   openGraph: {
     title: 'Luxury Dubai Properties | Tanmiyat Marketplace',
-    description:
-      'Buy & rent verified luxury residences in Dubai. Direct developer and premier brokerage listings with DLD compliance.',
+    description: 'Buy & rent verified luxury residences in Dubai. Direct developer and premier brokerage listings with DLD compliance.',
   },
 };
 
@@ -30,26 +28,13 @@ export default async function PropertiesPage({ searchParams }: PageProps) {
   const search = typeof resolvedParams.search === 'string' ? resolvedParams.search : undefined;
   const sort = typeof resolvedParams.sort === 'string' ? resolvedParams.sort : 'newest';
 
-  const result = await repository.getProperties({
-    purpose,
-    community,
-    propertyType,
-    bedrooms,
-    search,
-    sort,
-    isPublic: true,
-    page: 1,
-    limit: 24,
-  });
-
+  const result = await repository.getProperties({ purpose, community, propertyType, bedrooms, search, sort, isPublic: true, page: 1, limit: 24 });
   const agents = await repository.getAgents({ status: 'ACTIVE' });
 
   return (
     <main className="min-h-screen bg-[#0A0A09] text-[#F5F2EB] pt-24 pb-20">
-      <div className="mx-auto max-w-7xl px-4 pb-5 sm:px-6 lg:px-8">
-        <BackToHome />
-      </div>
-      <PropertiesMarketplaceClient
+      <div className="mx-auto max-w-7xl px-4 pb-5 sm:px-6 lg:px-8"><BackToHome /></div>
+      <PropertiesMarketplaceClientV2
         initialProperties={result.properties}
         initialTotal={result.total}
         initialPage={result.page}
