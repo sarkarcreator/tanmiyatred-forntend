@@ -43,12 +43,29 @@ export const PropertyDetailClient: React.FC<Props> = ({ property, similarPropert
   const [loanTermYears, setLoanTermYears] = useState(25);
   const [interestRate, setInterestRate] = useState(4.25);
 
-  // Normalize gallery images so every Next.js Image receives a defined string.
-  // featuredImage is optional on PropertyItem; heroImage is the required fallback.
-  const images: string[] = property.images?.filter((image): image is string => Boolean(image)) ?? [];
-  const galleryImages: string[] = images.length > 0
-    ? images
-    : [property.featuredImage, property.heroImage].filter((image): image is string => Boolean(image));
+  // Normalize gallery images from the API so every uploaded image is preserved.
+  // Supports normal arrays plus legacy JSON/comma-separated string values.
+  const rawImages = (property as PropertyItem & { images?: string[] | string }).images;
+  const images: string[] = Array.isArray(rawImages)
+    ? rawImages.filter((image): image is string => Boolean(image?.trim()))
+    : typeof rawImages === 'string'
+      ? (() => {
+          try {
+            const parsed = JSON.parse(rawImages);
+            return Array.isArray(parsed)
+              ? parsed.filter((image): image is string => typeof image === 'string' && Boolean(image.trim()))
+              : rawImages.split(/[,\n]/).map((image) => image.trim()).filter(Boolean);
+          } catch {
+            return rawImages.split(/[,\n]/).map((image) => image.trim()).filter(Boolean);
+          }
+        })()
+      : [];
+  const galleryImages: string[] = Array.from(
+    new Set(
+      (images.length > 0 ? images : [property.featuredImage, property.heroImage])
+        .filter((image): image is string => Boolean(image?.trim()))
+    )
+  );
 
   // Currency exchange approximations
   const currencyRates = {
@@ -125,36 +142,53 @@ export const PropertyDetailClient: React.FC<Props> = ({ property, similarPropert
         </div>
       </div>
 
-      {/* GALLERY SECTION */}
-      <div className="space-y-3">
-        <div className="relative aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden bg-[#0A0A09] border border-[#25221E]">
-          {galleryImages.length > 0 ? (
-            <Image
-              src={galleryImages[selectedImageIndex] ?? galleryImages[0]}
-              alt={property.title}
-              fill
-              priority
-              className="object-cover transition-opacity duration-500"
-              sizes="(max-width: 1280px) 100vw, 1280px"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-[#8C867E] text-sm">No property image available</div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-          <div className="absolute top-4 right-4 flex items-center gap-2">
-            <button onClick={handleShare} className="p-2.5 bg-black/70 hover:bg-black/90 text-[#F5F2EB] border border-[#3A3731] transition-colors" title="Share Residence"><Share2 className="w-4 h-4" /></button>
-          </div>
-        </div>
+      {/* GALLERY SECTION — SHOW EVERY UPLOADED PROPERTY IMAGE */}
+      <div className="space-y-4">
+        {galleryImages.length > 0 ? (
+          <>
+            <div className="relative aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden bg-[#0A0A09] border border-[#25221E]">
+              <Image
+                src={galleryImages[selectedImageIndex] ?? galleryImages[0]}
+                alt={`${property.title} — image ${selectedImageIndex + 1} of ${galleryImages.length}`}
+                fill
+                priority
+                className="object-cover transition-opacity duration-500"
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <span className="px-2.5 py-1 bg-black/70 border border-[#3A3731] text-[#F5F2EB] text-[10px] uppercase tracking-wider">
+                  {selectedImageIndex + 1} / {galleryImages.length}
+                </span>
+                <button onClick={handleShare} className="p-2.5 bg-black/70 hover:bg-black/90 text-[#F5F2EB] border border-[#3A3731] transition-colors" title="Share Residence"><Share2 className="w-4 h-4" /></button>
+              </div>
+            </div>
 
-        {galleryImages.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            {galleryImages.map((img, idx) => (
-              <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`relative w-24 sm:w-32 aspect-[16/10] shrink-0 border overflow-hidden transition-all ${selectedImageIndex === idx ? 'border-[#B79A62] scale-[1.02]' : 'border-[#25221E] opacity-60 hover:opacity-100'}`}>
-                <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" referrerPolicy="no-referrer" />
-              </button>
-            ))}
-          </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={`${img}-${idx}`}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(idx)}
+                  aria-label={`View property image ${idx + 1}`}
+                  className={`group relative aspect-[16/10] overflow-hidden border transition-all ${selectedImageIndex === idx ? 'border-[#B79A62] ring-1 ring-[#B79A62]' : 'border-[#25221E] hover:border-[#B79A62]/60'}`}
+                >
+                  <Image
+                    src={img}
+                    alt={`${property.title} — thumbnail ${idx + 1}`}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    referrerPolicy="no-referrer"
+                  />
+                  <span className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/75 text-[#F5F2EB] text-[9px] font-mono">{idx + 1}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="aspect-[16/9] md:aspect-[21/9] w-full flex items-center justify-center bg-[#0A0A09] border border-[#25221E] text-[#8C867E] text-sm">No property image available</div>
         )}
       </div>
 
