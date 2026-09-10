@@ -19,6 +19,9 @@ import {
   Bath,
   Layers,
   FileText,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface ProjectDetailClientProps {
@@ -39,6 +42,7 @@ export const ProjectDetailClient: React.FC<ProjectDetailClientProps> = ({ projec
     locale === 'ar' && project.architectureAr ? project.architectureAr : project.architecture;
 
   const units = project.units || [];
+  const gallery = project.gallery || [];
 
   const filteredUnits = units.filter((u) => {
     if (activeTab === 'ALL') return true;
@@ -51,6 +55,17 @@ export const ProjectDetailClient: React.FC<ProjectDetailClientProps> = ({ projec
   const handleUnitReserve = (unit: UnitItem) => {
     setSelectedUnit(unit);
     setInquiryModalOpen(true);
+  };
+
+  const openGallery = (index: number) => setGalleryIndex(index);
+  const closeGallery = () => setGalleryIndex(null);
+  const showPreviousImage = () => {
+    if (!gallery.length || galleryIndex === null) return;
+    setGalleryIndex((galleryIndex - 1 + gallery.length) % gallery.length);
+  };
+  const showNextImage = () => {
+    if (!gallery.length || galleryIndex === null) return;
+    setGalleryIndex((galleryIndex + 1) % gallery.length);
   };
 
   const whatsAppNumber = '+971480082664';
@@ -338,7 +353,7 @@ export const ProjectDetailClient: React.FC<ProjectDetailClientProps> = ({ projec
       </section>
 
       {/* 5. ARCHITECTURAL GALLERY */}
-      {project.gallery && project.gallery.length > 0 && (
+      {gallery.length > 0 && (
         <section className="py-20 sm:py-28 bg-[#0A0A09] border-b border-[#22201C]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl mb-12">
@@ -351,11 +366,13 @@ export const ProjectDetailClient: React.FC<ProjectDetailClientProps> = ({ projec
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {project.gallery.map((img, idx) => (
-                <div
+              {gallery.map((img, idx) => (
+                <button
+                  type="button"
                   key={img.id}
-                  onClick={() => setGalleryIndex(idx)}
-                  className="group relative aspect-[4/3] bg-[#171715] overflow-hidden cursor-pointer"
+                  onClick={() => openGallery(idx)}
+                  className="group relative aspect-[4/3] bg-[#171715] overflow-hidden cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B79A62]"
+                  aria-label={`Open ${img.caption || `${project.title} image ${idx + 1}`}`}
                 >
                   <Image
                     src={img.imageUrl}
@@ -373,7 +390,7 @@ export const ProjectDetailClient: React.FC<ProjectDetailClientProps> = ({ projec
                       {locale === 'ar' && img.captionAr ? img.captionAr : img.caption}
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -429,6 +446,76 @@ export const ProjectDetailClient: React.FC<ProjectDetailClientProps> = ({ projec
           REQUEST INFORMATION
         </button>
       </div>
+
+      {/* VISUAL ARCHIVE LIGHTBOX */}
+      {galleryIndex !== null && gallery[galleryIndex] && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visual Archive image viewer"
+          onClick={closeGallery}
+        >
+          <button
+            type="button"
+            onClick={closeGallery}
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 w-11 h-11 rounded-full bg-[#171715]/90 border border-[#3A3731] text-[#F5F2EB] flex items-center justify-center hover:border-[#B79A62] hover:text-[#B79A62] transition-colors"
+            aria-label="Close image viewer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {gallery.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showPreviousImage();
+                }}
+                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#171715]/90 border border-[#3A3731] text-[#F5F2EB] flex items-center justify-center hover:border-[#B79A62] hover:text-[#B79A62] transition-colors"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  showNextImage();
+                }}
+                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#171715]/90 border border-[#3A3731] text-[#F5F2EB] flex items-center justify-center hover:border-[#B79A62] hover:text-[#B79A62] transition-colors"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          <div
+            className="relative w-full max-w-6xl h-[78vh] flex items-center justify-center"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Image
+              src={gallery[galleryIndex].imageUrl}
+              alt={gallery[galleryIndex].caption || project.title}
+              fill
+              sizes="90vw"
+              referrerPolicy="no-referrer"
+              className="object-contain"
+              priority
+            />
+          </div>
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 max-w-[90vw] text-center">
+            <p className="text-xs sm:text-sm text-[#C8C0B3] bg-[#0A0A09]/85 border border-[#2D2A26] px-4 py-2">
+              {locale === 'ar' && gallery[galleryIndex].captionAr
+                ? gallery[galleryIndex].captionAr
+                : gallery[galleryIndex].caption || `${galleryIndex + 1} / ${gallery.length}`}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* INQUIRY MODAL */}
       <InquiryModal
