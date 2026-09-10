@@ -15,8 +15,8 @@ import { OffersManager } from '@/components/admin/crm/OffersManager';
 import { DealsManager } from '@/components/admin/crm/DealsManager';
 import { CommissionsManager } from '@/components/admin/crm/CommissionsManager';
 import {
-  LayoutDashboard, Building, Layers, Inbox, Clock, Newspaper, Users, ExternalLink,
-  Shield, LogOut, Calendar, FileCheck, Handshake, Coins,
+  LayoutDashboard, Building, Layers, Inbox, Clock, Newspaper, Users, ExternalLink, Shield,
+  LogOut, Calendar, FileCheck, Handshake, Coins,
 } from 'lucide-react';
 
 interface AdminDashboardClientProps {
@@ -31,8 +31,7 @@ export type AdminTab = 'OVERVIEW' | 'LEADS_CRM' | 'PROPERTIES' | 'AGENTS' | 'VIE
 const readJson = async (res: Response): Promise<{ success?: boolean; data?: unknown; error?: string }> => {
   const text = await res.text();
   if (!text.trim()) return { success: false, error: `Empty response from server (HTTP ${res.status}).` };
-  try { return JSON.parse(text); }
-  catch { return { success: false, error: `Invalid server response (HTTP ${res.status}).` }; }
+  try { return JSON.parse(text); } catch { return { success: false, error: `Invalid server response (HTTP ${res.status}).` }; }
 };
 
 export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
@@ -72,11 +71,22 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
       if (!res.ok || !json.success) throw new Error(json.error || `Failed to load CRM data (HTTP ${res.status}).`);
       return json.data;
     }));
-    const data = Object.fromEntries(results.map((r, i) => [endpoints[i][0], r.status === 'fulfilled' ? r.value : []]));
-    setProjects(data.projects || []); setInquiries(data.inquiries || []); setTimeline(data.timeline || []);
-    setNews(data.news || []); setProperties(data.properties || []); setLeads(data.leads || []);
-    setAgents(data.agents || []); setViewings(data.viewings || []); setOffers(data.offers || []);
-    setDeals(data.deals || []); setCommissions(data.commissions || []);
+
+    const data = Object.fromEntries(results.map((r, i) => [
+      endpoints[i][0], r.status === 'fulfilled' ? r.value : [],
+    ]));
+
+    setProjects((data.projects as ProjectItem[] | undefined) || []);
+    setInquiries((data.inquiries as InquiryItem[] | undefined) || []);
+    setTimeline((data.timeline as TimelineItem[] | undefined) || []);
+    setNews((data.news as NewsItem[] | undefined) || []);
+    setProperties((data.properties as PropertyItem[] | undefined) || []);
+    setLeads((data.leads as LeadItem[] | undefined) || []);
+    setAgents((data.agents as AgentItem[] | undefined) || []);
+    setViewings((data.viewings as ViewingItem[] | undefined) || []);
+    setOffers((data.offers as OfferItem[] | undefined) || []);
+    setDeals((data.deals as DealItem[] | undefined) || []);
+    setCommissions((data.commissions as CommissionItem[] | undefined) || []);
   };
 
   useEffect(() => {
@@ -113,20 +123,6 @@ export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({
   const handleLogout = async () => {
     try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', cache: 'no-store' }); }
     finally { setIsAuthenticated(false); setAuthPassword(''); setAuthError(''); }
-  };
-
-  const handleUpdateInquiryStatus = async (id: string, newStatus: 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'CLOSED') => {
-    try {
-      const res = await fetch(`/api/inquiries/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ status: newStatus }) });
-      if (res.ok) setInquiries((prev) => prev.map((inq) => inq.id === id ? { ...inq, status: newStatus } : inq));
-    } catch (err) { console.error(err); }
-  };
-
-  const handleExportInquiriesCSV = () => {
-    const headers = ['ID', 'Date', 'Name', 'Email', 'Phone', 'Project', 'Status', 'Message'];
-    const rows = inquiries.map((i) => [i.id, new Date(i.createdAt).toISOString(), `\"${i.name.replace(/\"/g, '\"\"')}\"`, i.email, `\"${i.phone}\"`, `\"${i.interestedProject || 'General'}\"`, i.status, `\"${(i.message || '').replace(/\"/g, '\"\"')}\"`]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const link = document.createElement('a'); link.setAttribute('href', encodeURI(csvContent)); link.setAttribute('download', `tanmiyat_leads_${new Date().toISOString().slice(0, 10)}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
 
   if (authChecking) return <div className="min-h-screen bg-[#0A0A09] flex items-center justify-center p-6 text-[#B79A62] text-xs uppercase tracking-[0.2em]">Restoring secure session…</div>;
