@@ -43,27 +43,14 @@ export const PropertyDetailClient: React.FC<Props> = ({ property, similarPropert
   const [loanTermYears, setLoanTermYears] = useState(25);
   const [interestRate, setInterestRate] = useState(4.25);
 
-  // Normalize gallery images from the API so every uploaded image is preserved.
-  // Supports normal arrays plus legacy JSON/comma-separated string values.
-  const rawImages = (property as PropertyItem & { images?: string[] | string }).images;
-  const images: string[] = Array.isArray(rawImages)
-    ? rawImages.filter((image): image is string => Boolean(image?.trim()))
-    : typeof rawImages === 'string'
-      ? (() => {
-          try {
-            const parsed = JSON.parse(rawImages);
-            return Array.isArray(parsed)
-              ? parsed.filter((image): image is string => typeof image === 'string' && Boolean(image.trim()))
-              : rawImages.split(/[,\n]/).map((image) => image.trim()).filter(Boolean);
-          } catch {
-            return rawImages.split(/[,\n]/).map((image) => image.trim()).filter(Boolean);
-          }
-        })()
-      : [];
+  // PropertyItem.images is already typed as string[]. Normalize the array,
+  // remove empty values and duplicates, and keep every uploaded image.
   const galleryImages: string[] = Array.from(
     new Set(
-      (images.length > 0 ? images : [property.featuredImage, property.heroImage])
-        .filter((image): image is string => Boolean(image?.trim()))
+      (Array.isArray(property.images) && property.images.length > 0
+        ? property.images
+        : [property.featuredImage, property.heroImage]
+      ).filter((image): image is string => Boolean(image?.trim()))
     )
   );
 
