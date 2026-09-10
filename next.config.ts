@@ -8,21 +8,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Allow access to remote images for luxury architectural photography
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
+      { protocol: 'https', hostname: 'picsum.photos', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'images.unsplash.com', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'api.tanmiyatrealestate.com', port: '', pathname: '/uploads/**' },
+      { protocol: 'http', hostname: 'localhost', port: '4000', pathname: '/uploads/**' },
     ],
   },
   output: 'standalone',
@@ -38,12 +29,8 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ['motion'],
   webpack: (config, { dev }) => {
-    // HMR is disabled in AI Studio via DISABLE_HMR env var.
-    // Do not modify—file watching is disabled to prevent flickering during agent edits.
     if (dev && process.env.DISABLE_HMR === 'true') {
-      config.watchOptions = {
-        ignored: /.*/,
-      };
+      config.watchOptions = { ignored: /.*/ };
     }
     return config;
   },
