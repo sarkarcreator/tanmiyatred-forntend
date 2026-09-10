@@ -285,7 +285,9 @@ export const PropertiesMarketplaceClient: React.FC<Props> = ({
         </div>
       )}
 
-      <ViewingModal property={selectedPropertyForViewing} agents={agents} onClose={() => setSelectedPropertyForViewing(null)} />
+      {selectedPropertyForViewing && (
+        <ViewingModal property={selectedPropertyForViewing} onClose={() => setSelectedPropertyForViewing(null)} />
+      )}
     </div>
   );
 };
