@@ -1,25 +1,197 @@
 'use client';
-import React,{useMemo,useRef,useState} from 'react';
-import Link from 'next/link';
-import {PropertyItem,AgentItem} from '@/types';
-import {Edit3,Trash2,Eye,EyeOff,Building,Plus,X,Upload} from 'lucide-react';
 
-type Props={initialProperties:PropertyItem[];agents:AgentItem[]};
-type EditableProperty=PropertyItem & {videoUrls:string[]};
-type CreateState={title:string;purpose:'FOR_SALE'|'FOR_RENT';propertyType:string;community:string;subCommunity:string;address:string;price:string;area:string;bedrooms:string;bathrooms:string;parkingSpaces:string;permit:string;agentId:string;description:string;image:string};
-const LOC=['Downtown Dubai','Business Bay','DIFC','Dubai Creek Harbour','Dubai Hills Estate','Dubai Marina','Jumeirah Beach Residence (JBR)','Palm Jumeirah','Bluewaters Island','City Walk','Jumeirah 1','Jumeirah 2','Jumeirah 3','Jumeirah Village Circle (JVC)','Jumeirah Village Triangle (JVT)','Al Barsha','Al Barsha South','Barsha Heights (TECOM)','Al Sufouh','Umm Suqeim','Al Wasl','Al Quoz','Meydan','MBR City','Nad Al Sheba','Emirates Hills','The Lakes','The Meadows','The Springs','Jumeirah Islands','Dubai Sports City','Motor City','Arabian Ranches','Dubailand','Damac Hills','Damac Hills 2','Town Square Dubai','The Valley','Dubai South','Expo City Dubai','Jebel Ali','Discovery Gardens','The Gardens','Dubai Production City','Dubai Studio City','Dubai Silicon Oasis','International City','Mirdif','Deira','Bur Dubai','Al Jaddaf','Ras Al Khor','Dubai Harbour','Dubai Internet City','Dubai Media City','Jumeirah Golf Estates'];
-const TYPES=['Apartment','Villa','Townhouse','Penthouse','Duplex','Mansion','Studio','Office','Retail'];
-const emptyCreate:CreateState={title:'',purpose:'FOR_SALE',propertyType:'Apartment',community:'Business Bay',subCommunity:'',address:'',price:'',area:'',bedrooms:'3',bathrooms:'2',parkingSpaces:'1',permit:'',agentId:'',description:'',image:''};
-export const PropertiesManager:React.FC<Props>=({initialProperties,agents})=>{
- const [items,setItems]=useState(initialProperties);const [edit,setEdit]=useState<EditableProperty|null>(null);const [create,setCreate]=useState<CreateState>(emptyCreate);const [showCreate,setShowCreate]=useState(false);const [search,setSearch]=useState('');const [purpose,setPurpose]=useState('ALL');const [location,setLocation]=useState('ALL');const [busy,setBusy]=useState(false);const imageInput=useRef<HTMLInputElement>(null);const videoInput=useRef<HTMLInputElement>(null);
- const filtered=useMemo(()=>items.filter(p=>(purpose==='ALL'||p.purpose===purpose)&&(location==='ALL'||p.community===location)&&(!search||[p.title,p.referenceNumber,p.community,p.address,p.agent?.name||'',agents.find(a=>a.id===p.agentId)?.name||''].some(v=>v.toLowerCase().includes(search.toLowerCase())))),[items,purpose,location,search,agents]);
- const upload=async(files:FileList,kind:'image'|'video')=>{setBusy(true);try{const urls:string[]=[];for(const file of Array.from(files)){const fd=new FormData();fd.append('file',file);const r=await fetch('/api/uploads',{method:'POST',body:fd});const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw new Error(j.error||'Upload failed');urls.push(j.data.url)}if(kind==='image')setEdit(e=>e?{...e,images:[...(e.images||[]),...urls],featuredImage:e.featuredImage||urls[0],heroImage:e.heroImage||urls[0]}:e);else setEdit(e=>e?{...e,videoUrls:[...e.videoUrls,...urls],videoUrl:e.videoUrls[0]||urls[0]}:e)}catch(e){alert(e instanceof Error?e.message:'Upload failed')}finally{setBusy(false)}};
- const save=async()=>{if(!edit)return;setBusy(true);try{const agent=agents.find(a=>a.id===edit.agentId);const images=edit.images||[];const body={...edit,agent,images,featuredImage:images[0]||edit.featuredImage,heroImage:images[0]||edit.heroImage,videoUrl:edit.videoUrls[0]||undefined,videoUrls:edit.videoUrls,agentBRN:agent?.brn,reraBrokerId:agent?.reraBrokerId,brokerORN:agent?.reraBrokerId};const r=await fetch(`/api/properties/${edit.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw new Error(j.error||'Update failed');setItems(xs=>xs.map(x=>x.id===edit.id?j.data:x));setEdit(null)}catch(e){alert(e instanceof Error?e.message:'Update failed')}finally{setBusy(false)}};
- const createProperty=async()=>{if(!create.title.trim()||!create.price||!create.area||!create.agentId){alert('Please enter title, price, area and select a listing agent.');return}setBusy(true);try{const slug=create.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now().toString().slice(-6);const image=create.image||'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80';const body={title:create.title.trim(),slug,purpose:create.purpose,propertyType:create.propertyType,community:create.community,subCommunity:create.subCommunity||create.community,address:create.address||`${create.subCommunity||create.community}, Dubai, UAE`,price:Number(create.price),currency:'AED',bedrooms:Number(create.bedrooms)||0,bathrooms:Number(create.bathrooms)||0,area:Number(create.area),parkingSpaces:Number(create.parkingSpaces)||0,agentId:create.agentId,advertisingPermitNumber:create.permit||undefined,featuredImage:image,heroImage:image,images:[image],description:create.description||`${create.title.trim()} located in ${create.community}, Dubai.`,workflowStatus:'PUBLISHED',status:'AVAILABLE',verified:true,verificationStatus:'VERIFIED',amenities:['Concierge Service','Swimming Pool','Private Parking']};const r=await fetch('/api/properties',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw new Error(j.error||'Property creation failed');setItems(xs=>[j.data,...xs]);setCreate(emptyCreate);setShowCreate(false)}catch(e){alert(e instanceof Error?e.message:'Property creation failed')}finally{setBusy(false)}};
- const remove=async(id:string)=>{if(!confirm('Delete this property listing?'))return;setBusy(true);try{const r=await fetch(`/api/properties/${id}`,{method:'DELETE'});if(!r.ok)throw new Error('Delete failed');setItems(xs=>xs.filter(x=>x.id!==id))}catch(e){alert(e instanceof Error?e.message:'Delete failed')}finally{setBusy(false)}};
- const toggle=async(p:PropertyItem)=>{const next=p.workflowStatus==='PUBLISHED'?'DRAFT':'PUBLISHED';const r=await fetch(`/api/properties/${p.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({workflowStatus:next})});if(r.ok)setItems(xs=>xs.map(x=>x.id===p.id?{...x,workflowStatus:next}:x))};
- return <div className="space-y-8"><div className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="font-editorial text-3xl text-[#F5F2EB]">Listing Properties</h1><p className="text-xs text-[#8C867E]">Create, edit, manage media, change agent, publish/draft and delete listings.</p></div><button onClick={()=>setShowCreate(true)} className="px-4 py-2 bg-[#B79A62] text-[#0A0A09] text-xs font-semibold"><Plus className="inline w-4 h-4 mr-1"/>New Property</button></div><div className="bg-[#171715] border border-[#25221E] p-4 flex flex-wrap gap-3"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search property or agent..." className="field-input w-72"/><select value={purpose} onChange={e=>setPurpose(e.target.value)} className="field-input"><option value="ALL">All Purposes</option><option value="FOR_SALE">For Sale</option><option value="FOR_RENT">For Rent</option></select><select value={location} onChange={e=>setLocation(e.target.value)} className="field-input"><option value="ALL">All Locations</option>{LOC.map(x=><option key={x}>{x}</option>)}</select></div><div className="bg-[#171715] border border-[#25221E] overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0A0A09] text-[#7A756D]"><tr><th className="p-3">Property</th><th className="p-3">Agent</th><th className="p-3">Purpose</th><th className="p-3">Price</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-[#22201C]">{filtered.map(p=><tr key={p.id}><td className="p-3"><div className="flex items-center gap-3"><img src={p.featuredImage||p.heroImage} alt={p.title} className="w-14 h-11 object-cover"/><div><div className="text-[#F5F2EB]">{p.title}</div><div className="text-[10px] text-[#7A756D]">{p.referenceNumber} • {p.community}</div></div></div></td><td className="p-3">{p.agent?.name||agents.find(a=>a.id===p.agentId)?.name||'Unassigned'}</td><td className="p-3">{p.purpose==='FOR_RENT'?'Rent':'Sale'}</td><td className="p-3">AED {p.price.toLocaleString()}</td><td className="p-3">{p.workflowStatus}</td><td className="p-3 text-right whitespace-nowrap"><button onClick={()=>toggle(p)} className="p-1.5" title="Publish / Draft">{p.workflowStatus==='PUBLISHED'?<EyeOff className="w-4 h-4"/>:<Eye className="w-4 h-4"/>}</button><Link href={`/properties/${p.slug}`} target="_blank" className="p-1.5 inline-block" title="View"><Building className="w-4 h-4"/></Link><button onClick={()=>setEdit({...p,images:[...(p.images||[])],videoUrls:p.videoUrl?[p.videoUrl]:[]})} className="p-1.5 text-[#B79A62]" title="Edit"><Edit3 className="w-4 h-4"/></button><button onClick={()=>remove(p.id)} disabled={busy} className="p-1.5 text-red-400" title="Delete"><Trash2 className="w-4 h-4"/></button></td></tr>)}</tbody></table></div>{showCreate&&<Modal title="New Property Listing" onClose={()=>setShowCreate(false)}><div className="grid md:grid-cols-2 gap-4">{([['Title','title'],['Sub-community / Building','subCommunity'],['Full Address','address'],['Price AED','price'],['Area Sq.Ft','area'],['Bedrooms','bedrooms'],['Bathrooms','bathrooms'],['Parking','parkingSpaces'],['Permit','permit'],['Main Image URL','image']] as const).map(([label,key])=><Field key={key} label={label} value={create[key]} type={['price','area','bedrooms','bathrooms','parkingSpaces'].includes(key)?'number':'text'} onChange={v=>setCreate(x=>({...x,[key]:v}))}/>) }<Field label="Property Type" value={create.propertyType} select={TYPES} onChange={v=>setCreate(x=>({...x,propertyType:v}))}/><Field label="Purpose" value={create.purpose} select={['FOR_SALE','FOR_RENT']} onChange={v=>setCreate(x=>({...x,purpose:v as 'FOR_SALE'|'FOR_RENT'}))}/><Field label="Community" value={create.community} select={LOC} onChange={v=>setCreate(x=>({...x,community:v}))}/></div><div className="mt-4"><label className="label">Listing Agent</label><select value={create.agentId} onChange={e=>setCreate(x=>({...x,agentId:e.target.value}))} className="field-input w-full"><option value="">Select Agent</option>{agents.filter(a=>a.status==='ACTIVE').map(a=><option key={a.id} value={a.id}>{a.name} • BRN {a.brn||'N/A'}</option>)}</select></div><div className="mt-4"><label className="label">Description</label><textarea rows={5} value={create.description} onChange={e=>setCreate(x=>({...x,description:e.target.value}))} className="field-input w-full"/></div><div className="flex justify-end gap-3 mt-6"><button onClick={()=>setShowCreate(false)} className="px-4 py-2 border border-[#332F28]">Cancel</button><button onClick={createProperty} disabled={busy} className="px-5 py-2 bg-[#B79A62] text-[#0A0A09] font-semibold">{busy?'Creating...':'Create Listing'}</button></div></Modal>}{edit&&<Modal title="Edit Property Listing" onClose={()=>setEdit(null)}><div className="grid md:grid-cols-2 gap-4">{([['Title','title'],['Sub-community / Building','subCommunity'],['Full Address','address'],['Price AED','price'],['Area Sq.Ft','area'],['Bedrooms','bedrooms'],['Bathrooms','bathrooms'],['Parking','parkingSpaces'],['Permit','advertisingPermitNumber']] as const).map(([label,key])=><Field key={key} label={label} value={String(edit[key]??'')} type={['price','area','bedrooms','bathrooms','parkingSpaces'].includes(key)?'number':'text'} onChange={v=>setEdit(e=>e?{...e,[key]:['price','area','bedrooms','bathrooms','parkingSpaces'].includes(key)?Number(v):v}:e)}/>) }<Field label="Property Type" value={edit.propertyType} select={TYPES} onChange={v=>setEdit(e=>e?{...e,propertyType:v}:e)}/><Field label="Purpose" value={edit.purpose} select={['FOR_SALE','FOR_RENT']} onChange={v=>setEdit(e=>e?{...e,purpose:v as PropertyItem['purpose']}:e)}/><Field label="Community" value={edit.community} select={LOC} onChange={v=>setEdit(e=>e?{...e,community:v}:e)}/></div><div className="mt-4"><label className="label">Listing Agent</label><select value={edit.agentId} onChange={e=>setEdit(x=>x?{...x,agentId:e.target.value}:x)} className="field-input w-full"><option value="">Select Agent</option>{agents.filter(a=>a.status==='ACTIVE').map(a=><option key={a.id} value={a.id}>{a.name} • BRN {a.brn||'N/A'}</option>)}</select></div><div className="mt-4"><label className="label">Description</label><textarea rows={5} value={edit.description||''} onChange={e=>setEdit(x=>x?{...x,description:e.target.value}:x)} className="field-input w-full"/></div><Media title="Pictures" urls={edit.images||[]} input={imageInput} accept="image/*" kind="image" upload={upload} onSet={urls=>setEdit(e=>e?{...e,images:urls,featuredImage:urls[0]||'',heroImage:urls[0]||''}:e)}/><Media title="Videos" urls={edit.videoUrls} input={videoInput} accept="video/*" kind="video" upload={upload} onSet={urls=>setEdit(e=>e?{...e,videoUrls:urls,videoUrl:urls[0]||undefined}:e)}/><div className="flex justify-end gap-3 mt-6"><button onClick={()=>setEdit(null)} className="px-4 py-2 border border-[#332F28]">Cancel</button><button onClick={save} disabled={busy} className="px-5 py-2 bg-[#B79A62] text-[#0A0A09] font-semibold">{busy?'Saving...':'Save Changes'}</button></div></Modal>}<style jsx>{`.field-input{background:#0A0A09;border:1px solid #25221E;padding:.6rem .75rem;color:#F5F2EB;outline:none}.label{display:block;margin-bottom:.3rem;color:#8C867E;font-size:10px;text-transform:uppercase;letter-spacing:.08em}`}</style></div>;
+import React, { useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { PropertyItem, AgentItem } from '@/types';
+import { Edit3, Trash2, Eye, EyeOff, Building, Plus, X, Upload, Video } from 'lucide-react';
+
+type Props = { initialProperties: PropertyItem[]; agents: AgentItem[] };
+type EditableProperty = PropertyItem & { videoUrls?: string[] };
+type CreateState = {
+  title: string; purpose: 'FOR_SALE' | 'FOR_RENT'; propertyType: string; community: string;
+  subCommunity: string; address: string; price: string; area: string; bedrooms: string;
+  bathrooms: string; parkingSpaces: string; permit: string; agentId: string; description: string;
+  images: string[]; videoUrls: string[];
 };
-const Modal=({title,onClose,children}:{title:string;onClose:()=>void;children:React.ReactNode})=><div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"><div className="bg-[#171715] border border-[#25221E] p-6 w-full max-w-5xl max-h-[94vh] overflow-y-auto"><div className="flex justify-between items-center mb-5"><h2 className="font-editorial text-2xl text-[#F5F2EB]">{title}</h2><button onClick={onClose}><X/></button></div>{children}</div></div>;
-const Field=({label,value,onChange,select,type='text'}:{label:string;value:string;onChange:(v:string)=>void;select?:string[];type?:string})=><div><label className="label">{label}</label>{select?<select value={value} onChange={e=>onChange(e.target.value)} className="field-input w-full">{select.map(x=><option key={x}>{x}</option>)}</select>:<input type={type} value={value} onChange={e=>onChange(e.target.value)} className="field-input w-full"/>}</div>;
-const Media=({title,urls,input,accept,kind,upload,onSet}:{title:string;urls:string[];input:React.RefObject<HTMLInputElement|null>;accept:string;kind:'image'|'video';upload:(f:FileList,k:'image'|'video')=>void;onSet:(urls:string[])=>void})=><div className="mt-4 bg-[#0A0A09] border border-[#25221E] p-4"><div className="flex justify-between"><label className="label">{title}</label><button type="button" onClick={()=>input.current?.click()} className="text-[#B79A62] text-xs"><Upload className="w-3 h-3 inline mr-1"/>Add / Replace</button></div><input ref={input} type="file" multiple accept={accept} hidden onChange={e=>{if(e.target.files)upload(e.target.files,kind)}}/><div className="mt-2 space-y-2">{urls.map((u,i)=><div key={`${u}-${i}`} className="flex items-center gap-2 text-[10px]"><span className="truncate flex-1">{i+1}. {u}</span><button type="button" onClick={()=>onSet(urls.filter((_,n)=>n!==i))} className="text-red-400"><Trash2 className="w-3 h-3"/></button></div>)}</div></div>;
+
+const LOC = ['Downtown Dubai','Business Bay','DIFC','Dubai Creek Harbour','Dubai Hills Estate','Dubai Marina','Jumeirah Beach Residence (JBR)','Palm Jumeirah','Bluewaters Island','City Walk','Jumeirah 1','Jumeirah 2','Jumeirah 3','Jumeirah Village Circle (JVC)','Jumeirah Village Triangle (JVT)','Al Barsha','Al Barsha South','Barsha Heights (TECOM)','Al Sufouh','Umm Suqeim','Al Wasl','Al Quoz','Meydan','MBR City','Nad Al Sheba','Emirates Hills','The Lakes','The Meadows','The Springs','Jumeirah Islands','Dubai Sports City','Motor City','Arabian Ranches','Dubailand','Damac Hills','Damac Hills 2','Town Square Dubai','The Valley','Dubai South','Expo City Dubai','Jebel Ali','Discovery Gardens','The Gardens','Dubai Production City','Dubai Studio City','Dubai Silicon Oasis','International City','Mirdif','Deira','Bur Dubai','Al Jaddaf','Ras Al Khor','Dubai Harbour','Dubai Internet City','Dubai Media City','Jumeirah Golf Estates'];
+const TYPES = ['Apartment','Villa','Townhouse','Penthouse','Duplex','Mansion','Studio','Office','Retail'];
+const emptyCreate: CreateState = { title:'', purpose:'FOR_SALE', propertyType:'Apartment', community:'Business Bay', subCommunity:'', address:'', price:'', area:'', bedrooms:'3', bathrooms:'2', parkingSpaces:'1', permit:'', agentId:'', description:'', images:[], videoUrls:[] };
+
+async function uploadMedia(files: FileList | File[]) {
+  const list = Array.from(files);
+  if (!list.length) return [] as string[];
+  const fd = new FormData();
+  list.forEach(file => fd.append('file', file, file.name));
+  const response = await fetch('/api/uploads', { method: 'POST', body: fd });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok || !json.success) throw new Error(json.error || `Upload failed (${response.status})`);
+  const data = json.data;
+  if (Array.isArray(data?.files)) return data.files.map((f: { url: string }) => f.url).filter(Boolean);
+  if (data?.url) return [data.url];
+  throw new Error('Upload completed but no storage URL was returned.');
+}
+
+export const PropertiesManager: React.FC<Props> = ({ initialProperties, agents }) => {
+  const [items, setItems] = useState(initialProperties);
+  const [edit, setEdit] = useState<EditableProperty | null>(null);
+  const [create, setCreate] = useState<CreateState>(emptyCreate);
+  const [showCreate, setShowCreate] = useState(false);
+  const [search, setSearch] = useState('');
+  const [purpose, setPurpose] = useState('ALL');
+  const [location, setLocation] = useState('ALL');
+  const [busy, setBusy] = useState(false);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const videoInput = useRef<HTMLInputElement>(null);
+  const createImageInput = useRef<HTMLInputElement>(null);
+  const createVideoInput = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => items.filter(p =>
+    (purpose === 'ALL' || p.purpose === purpose) &&
+    (location === 'ALL' || p.community === location) &&
+    (!search || [p.title, p.referenceNumber, p.community, p.address, p.agent?.name || '', agents.find(a => a.id === p.agentId)?.name || '']
+      .some(v => String(v || '').toLowerCase().includes(search.toLowerCase())))
+  ), [items, purpose, location, search, agents]);
+
+  const handleEditUpload = async (files: FileList, kind: 'image' | 'video') => {
+    if (!edit || !files.length) return;
+    setBusy(true);
+    try {
+      const urls = await uploadMedia(files);
+      setEdit(current => {
+        if (!current) return current;
+        if (kind === 'image') {
+          const images = [...(current.images || []), ...urls];
+          return { ...current, images, featuredImage: current.featuredImage || urls[0], heroImage: current.heroImage || urls[0] };
+        }
+        const videoUrls = [...(current.videoUrls || []), ...urls];
+        return { ...current, videoUrls, videoUrl: current.videoUrl || urls[0] } as EditableProperty;
+      });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Upload failed');
+    } finally { setBusy(false); }
+  };
+
+  const handleCreateUpload = async (files: FileList, kind: 'image' | 'video') => {
+    if (!files.length) return;
+    setBusy(true);
+    try {
+      const urls = await uploadMedia(files);
+      setCreate(current => kind === 'image'
+        ? { ...current, images: [...current.images, ...urls] }
+        : { ...current, videoUrls: [...current.videoUrls, ...urls] });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Upload failed');
+    } finally { setBusy(false); }
+  };
+
+  const save = async () => {
+    if (!edit) return;
+    setBusy(true);
+    try {
+      const agent = agents.find(a => a.id === edit.agentId);
+      const images = edit.images || [];
+      const videoUrls = edit.videoUrls || [];
+      const body = {
+        ...edit, agent, images,
+        featuredImage: images[0] || edit.featuredImage,
+        heroImage: images[0] || edit.heroImage,
+        videoUrl: videoUrls[0] || undefined,
+        videoUrls,
+        agentBRN: agent?.brn,
+        reraBrokerId: agent?.reraBrokerId,
+        brokerORN: agent?.reraBrokerId,
+      };
+      const r = await fetch(`/api/properties/${edit.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.success) throw new Error(j.error || 'Update failed');
+      setItems(xs => xs.map(x => x.id === edit.id ? j.data : x));
+      setEdit(null);
+    } catch (error) { alert(error instanceof Error ? error.message : 'Update failed'); }
+    finally { setBusy(false); }
+  };
+
+  const createProperty = async () => {
+    if (!create.title.trim() || !create.price || !create.area || !create.agentId) {
+      alert('Please enter title, price, area and select a listing agent.'); return;
+    }
+    if (!create.images.length) { alert('Please upload at least one property image.'); return; }
+    setBusy(true);
+    try {
+      const slug = create.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') + '-' + Date.now().toString().slice(-6);
+      const image = create.images[0];
+      const body = {
+        title:create.title.trim(), slug, purpose:create.purpose, propertyType:create.propertyType,
+        community:create.community, subCommunity:create.subCommunity || create.community,
+        address:create.address || `${create.subCommunity || create.community}, Dubai, UAE`,
+        price:Number(create.price), currency:'AED', bedrooms:Number(create.bedrooms)||0,
+        bathrooms:Number(create.bathrooms)||0, area:Number(create.area), parkingSpaces:Number(create.parkingSpaces)||0,
+        agentId:create.agentId, advertisingPermitNumber:create.permit || undefined,
+        featuredImage:image, heroImage:image, images:create.images,
+        videoUrl:create.videoUrls[0] || undefined, videoUrls:create.videoUrls,
+        description:create.description || `${create.title.trim()} located in ${create.community}, Dubai.`,
+        workflowStatus:'PUBLISHED', status:'AVAILABLE', verified:true, verificationStatus:'VERIFIED',
+        amenities:['Concierge Service','Swimming Pool','Private Parking'],
+      };
+      const r = await fetch('/api/properties', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.success) throw new Error(j.error || 'Property creation failed');
+      setItems(xs => [j.data, ...xs]); setCreate(emptyCreate); setShowCreate(false);
+    } catch (error) { alert(error instanceof Error ? error.message : 'Property creation failed'); }
+    finally { setBusy(false); }
+  };
+
+  const remove = async (id:string) => {
+    if (!confirm('Delete this property listing?')) return;
+    setBusy(true);
+    try { const r = await fetch(`/api/properties/${id}`, {method:'DELETE'}); if (!r.ok) throw new Error('Delete failed'); setItems(xs => xs.filter(x => x.id !== id)); }
+    catch (error) { alert(error instanceof Error ? error.message : 'Delete failed'); }
+    finally { setBusy(false); }
+  };
+
+  const toggle = async (p:PropertyItem) => {
+    const next = p.workflowStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+    const r = await fetch(`/api/properties/${p.id}`, {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({workflowStatus:next})});
+    if (r.ok) setItems(xs => xs.map(x => x.id === p.id ? {...x, workflowStatus:next} : x));
+  };
+
+  return <div className="space-y-8">
+    <div className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="font-editorial text-3xl text-[#F5F2EB]">Listing Properties</h1><p className="text-xs text-[#8C867E]">Create, edit, manage media, change agent, publish/draft and delete listings.</p></div><button onClick={()=>setShowCreate(true)} className="px-4 py-2 bg-[#B79A62] text-[#0A0A09] text-xs font-semibold"><Plus className="inline w-4 h-4 mr-1"/>New Property</button></div>
+    <div className="bg-[#171715] border border-[#25221E] p-4 flex flex-wrap gap-3"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search property or agent..." className="field-input w-72"/><select value={purpose} onChange={e=>setPurpose(e.target.value)} className="field-input"><option value="ALL">All Purposes</option><option value="FOR_SALE">For Sale</option><option value="FOR_RENT">For Rent</option></select><select value={location} onChange={e=>setLocation(e.target.value)} className="field-input"><option value="ALL">All Locations</option>{LOC.map(x=><option key={x}>{x}</option>)}</select></div>
+    <div className="bg-[#171715] border border-[#25221E] overflow-x-auto"><table className="w-full text-left text-xs"><thead className="bg-[#0A0A09] text-[#7A756D]"><tr><th className="p-3">Property</th><th className="p-3">Agent</th><th className="p-3">Purpose</th><th className="p-3">Price</th><th className="p-3">Status</th><th className="p-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-[#22201C]">{filtered.map(p=><tr key={p.id}><td className="p-3"><div className="flex items-center gap-3"><img src={p.featuredImage||p.heroImage} alt={p.title} className="w-14 h-11 object-cover"/><div><div className="text-[#F5F2EB]">{p.title}</div><div className="text-[10px] text-[#7A756D]">{p.referenceNumber} • {p.community}</div></div></div></td><td className="p-3">{p.agent?.name||agents.find(a=>a.id===p.agentId)?.name||'Unassigned'}</td><td className="p-3">{p.purpose==='FOR_RENT'?'Rent':'Sale'}</td><td className="p-3">AED {p.price.toLocaleString()}</td><td className="p-3">{p.workflowStatus}</td><td className="p-3 text-right whitespace-nowrap"><button onClick={()=>toggle(p)} className="p-1.5" title="Publish / Draft">{p.workflowStatus==='PUBLISHED'?<EyeOff className="w-4 h-4"/>:<Eye className="w-4 h-4"/>}</button><Link href={`/properties/${p.slug}`} target="_blank" className="p-1.5 inline-block" title="View"><Building className="w-4 h-4"/></Link><button onClick={()=>setEdit({...p,images:[...(p.images||[])],videoUrls:(p as any).videoUrls?.length ? (p as any).videoUrls : p.videoUrl ? [p.videoUrl] : []})} className="p-1.5 text-[#B79A62]" title="Edit"><Edit3 className="w-4 h-4"/></button><button onClick={()=>remove(p.id)} disabled={busy} className="p-1.5 text-red-400" title="Delete"><Trash2 className="w-4 h-4"/></button></td></tr>)}</tbody></table></div>
+
+    {showCreate && <Modal title="New Property Listing" onClose={()=>!busy&&setShowCreate(false)}>
+      <div className="grid md:grid-cols-2 gap-4">
+        <Field label="Title" value={create.title} onChange={v=>setCreate(x=>({...x,title:v}))}/><Field label="Sub-community / Building" value={create.subCommunity} onChange={v=>setCreate(x=>({...x,subCommunity:v}))}/><Field label="Full Address" value={create.address} onChange={v=>setCreate(x=>({...x,address:v}))}/><Field label="Price AED" value={create.price} type="number" onChange={v=>setCreate(x=>({...x,price:v}))}/><Field label="Area Sq.Ft" value={create.area} type="number" onChange={v=>setCreate(x=>({...x,area:v}))}/><Field label="Bedrooms" value={create.bedrooms} type="number" onChange={v=>setCreate(x=>({...x,bedrooms:v}))}/><Field label="Bathrooms" value={create.bathrooms} type="number" onChange={v=>setCreate(x=>({...x,bathrooms:v}))}/><Field label="Parking" value={create.parkingSpaces} type="number" onChange={v=>setCreate(x=>({...x,parkingSpaces:v}))}/><Field label="Permit" value={create.permit} onChange={v=>setCreate(x=>({...x,permit:v}))}/><Field label="Property Type" value={create.propertyType} select={TYPES} onChange={v=>setCreate(x=>({...x,propertyType:v}))}/><Field label="Purpose" value={create.purpose} select={['FOR_SALE','FOR_RENT']} onChange={v=>setCreate(x=>({...x,purpose:v as 'FOR_SALE'|'FOR_RENT'}))}/><Field label="Community" value={create.community} select={LOC} onChange={v=>setCreate(x=>({...x,community:v}))}/>
+      </div>
+      <div className="mt-4"><label className="label">Listing Agent</label><select value={create.agentId} onChange={e=>setCreate(x=>({...x,agentId:e.target.value}))} className="field-input w-full"><option value="">Select Agent</option>{agents.filter(a=>a.status==='ACTIVE').map(a=><option key={a.id} value={a.id}>{a.name} • BRN {a.brn||'N/A'}</option>)}</select></div>
+      <div className="mt-4"><label className="label">Description</label><textarea rows={5} value={create.description} onChange={e=>setCreate(x=>({...x,description:e.target.value}))} className="field-input w-full"/></div>
+      <Media title="Property Pictures" urls={create.images} input={createImageInput} accept="image/*" kind="image" upload={handleCreateUpload} onSet={urls=>setCreate(x=>({...x,images:urls}))}/>
+      <Media title="Property Videos" urls={create.videoUrls} input={createVideoInput} accept="video/mp4,video/webm,video/quicktime" kind="video" upload={handleCreateUpload} onSet={urls=>setCreate(x=>({...x,videoUrls:urls}))}/>
+      <div className="flex justify-end gap-3 mt-6"><button onClick={()=>setShowCreate(false)} disabled={busy} className="px-4 py-2 border border-[#332F28]">Cancel</button><button onClick={createProperty} disabled={busy} className="px-5 py-2 bg-[#B79A62] text-[#0A0A09] font-semibold">{busy?'Uploading / Creating...':'Create Listing'}</button></div>
+    </Modal>}
+
+    {edit && <Modal title="Edit Property Listing" onClose={()=>!busy&&setEdit(null)}>
+      <div className="grid md:grid-cols-2 gap-4"><Field label="Title" value={String(edit.title||'')} onChange={v=>setEdit(e=>e?{...e,title:v}:e)}/><Field label="Sub-community / Building" value={String(edit.subCommunity||'')} onChange={v=>setEdit(e=>e?{...e,subCommunity:v}:e)}/><Field label="Full Address" value={String(edit.address||'')} onChange={v=>setEdit(e=>e?{...e,address:v}:e)}/><Field label="Price AED" value={String(edit.price??'')} type="number" onChange={v=>setEdit(e=>e?{...e,price:Number(v)}:e)}/><Field label="Area Sq.Ft" value={String(edit.area??'')} type="number" onChange={v=>setEdit(e=>e?{...e,area:Number(v)}:e)}/><Field label="Bedrooms" value={String(edit.bedrooms??'')} type="number" onChange={v=>setEdit(e=>e?{...e,bedrooms:Number(v)}:e)}/><Field label="Bathrooms" value={String(edit.bathrooms??'')} type="number" onChange={v=>setEdit(e=>e?{...e,bathrooms:Number(v)}:e)}/><Field label="Parking" value={String(edit.parkingSpaces??'')} type="number" onChange={v=>setEdit(e=>e?{...e,parkingSpaces:Number(v)}:e)}/><Field label="Permit" value={String(edit.advertisingPermitNumber||'')} onChange={v=>setEdit(e=>e?{...e,advertisingPermitNumber:v}:e)}/><Field label="Property Type" value={edit.propertyType} select={TYPES} onChange={v=>setEdit(e=>e?{...e,propertyType:v}:e)}/><Field label="Purpose" value={edit.purpose} select={['FOR_SALE','FOR_RENT']} onChange={v=>setEdit(e=>e?{...e,purpose:v as PropertyItem['purpose']}:e)}/><Field label="Community" value={edit.community} select={LOC} onChange={v=>setEdit(e=>e?{...e,community:v}:e)}/></div>
+      <div className="mt-4"><label className="label">Listing Agent</label><select value={edit.agentId} onChange={e=>setEdit(x=>x?{...x,agentId:e.target.value}:x)} className="field-input w-full"><option value="">Select Agent</option>{agents.filter(a=>a.status==='ACTIVE').map(a=><option key={a.id} value={a.id}>{a.name} • BRN {a.brn||'N/A'}</option>)}</select></div>
+      <div className="mt-4"><label className="label">Description</label><textarea rows={5} value={edit.description||''} onChange={e=>setEdit(x=>x?{...x,description:e.target.value}:x)} className="field-input w-full"/></div>
+      <Media title="Pictures" urls={edit.images||[]} input={imageInput} accept="image/*" kind="image" upload={handleEditUpload} onSet={urls=>setEdit(e=>e?{...e,images:urls,featuredImage:urls[0]||'',heroImage:urls[0]||''}:e)}/>
+      <Media title="Videos" urls={edit.videoUrls||[]} input={videoInput} accept="video/mp4,video/webm,video/quicktime" kind="video" upload={handleEditUpload} onSet={urls=>setEdit(e=>e?{...e,videoUrls:urls,videoUrl:urls[0]||undefined}:e)}/>
+      <div className="flex justify-end gap-3 mt-6"><button onClick={()=>setEdit(null)} disabled={busy} className="px-4 py-2 border border-[#332F28]">Cancel</button><button onClick={save} disabled={busy} className="px-5 py-2 bg-[#B79A62] text-[#0A0A09] font-semibold">{busy?'Saving...':'Save Changes'}</button></div>
+    </Modal>}
+    <style jsx>{`.field-input{background:#0A0A09;border:1px solid #25221E;padding:.6rem .75rem;color:#F5F2EB;outline:none}.label{display:block;margin-bottom:.3rem;color:#8C867E;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em}`}</style>
+  </div>;
+};
+
+function Field({label,value,onChange,type='text',select}:{label:string;value:string;onChange:(v:string)=>void;type?:string;select?:string[]}) {
+  return <div><label className="label">{label}</label>{select ? <select value={value} onChange={e=>onChange(e.target.value)} className="field-input w-full">{select.map(x=><option key={x} value={x}>{x}</option>)}</select> : <input type={type} value={value} onChange={e=>onChange(e.target.value)} className="field-input w-full"/>}</div>;
+}
+
+function Media({title,urls,input,accept,kind,upload,onSet}:{title:string;urls:string[];input:React.RefObject<HTMLInputElement | null>;accept:string;kind:'image'|'video';upload:(files:FileList,kind:'image'|'video')=>void;onSet:(urls:string[])=>void}) {
+  const remove = (index:number) => onSet(urls.filter((_,i)=>i!==index));
+  return <div className="mt-5"><div className="flex items-center justify-between gap-3 mb-2"><label className="label m-0">{title} <span className="normal-case tracking-normal text-[#6E6962]">(multi-select supported)</span></label><button type="button" onClick={()=>input.current?.click()} className="px-3 py-2 border border-[#332F28] text-xs text-[#B79A62]"><Upload className="inline w-4 h-4 mr-1"/>Upload {kind === 'image' ? 'Images' : 'Videos'}</button></div><input ref={input} type="file" accept={accept} multiple className="hidden" onChange={e=>{if(e.target.files?.length) upload(e.target.files,kind);e.currentTarget.value='';}}/>{urls.length ? <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{urls.map((url,i)=><div key={`${url}-${i}`} className="relative border border-[#2B2823] bg-[#0A0A09] overflow-hidden">{kind==='image'?<img src={url} alt={`${title} ${i+1}`} className="w-full h-28 object-cover"/>:<video src={url} controls preload="metadata" className="w-full h-28 object-cover"/>}<button type="button" onClick={()=>remove(i)} className="absolute top-1 right-1 rounded-full bg-black/80 p-1 text-white" title="Remove"><X className="w-3 h-3"/></button></div>)}</div>:<div className="border border-dashed border-[#332F28] p-5 text-center text-xs text-[#6E6962]">{kind==='image'?'No pictures uploaded yet.':'No videos uploaded yet.'}</div>}</div>;
+}
+
+function Modal({title,onClose,children}:{title:string;onClose:()=>void;children:React.ReactNode}) {
+  return <div className="fixed inset-0 z-[100] bg-black/75 p-4 md:p-8 overflow-y-auto"><div className="max-w-5xl mx-auto bg-[#11110F] border border-[#2B2823] shadow-2xl"><div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-[#11110F] border-b border-[#2B2823]"><h2 className="font-editorial text-2xl text-[#F5F2EB]">{title}</h2><button onClick={onClose} className="p-2 text-[#8C867E] hover:text-white"><X/></button></div><div className="p-5">{children}</div></div></div>;
+}
