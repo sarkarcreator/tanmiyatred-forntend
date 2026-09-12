@@ -11,8 +11,8 @@ import { ViewingsManager } from '@/components/admin/crm/ViewingsManager';
 import { OffersManager } from '@/components/admin/crm/OffersManager';
 import { DealsManager } from '@/components/admin/crm/DealsManager';
 import { CommissionsManager } from '@/components/admin/crm/CommissionsManager';
-import { DevelopmentCMSManager } from '@/components/admin/crm/DevelopmentCMSManager';
-import { LayoutDashboard, Building, Layers, Inbox, Clock, Newspaper, Users, ExternalLink, Shield, LogOut, Calendar, FileCheck, Handshake, Coins } from 'lucide-react';
+import { DevelopmentCMSManagerV2 as DevelopmentCMSManager } from '@/components/admin/crm/DevelopmentCMSManagerV2';
+import { LayoutDashboard, Building, Inbox, Users, ExternalLink, Shield, LogOut, Calendar, FileCheck, Handshake, Coins } from 'lucide-react';
 
 interface AdminDashboardClientProps { initialProjects: ProjectItem[]; initialInquiries: InquiryItem[]; initialTimeline: TimelineItem[]; initialNews: NewsItem[]; initialProperties?: PropertyItem[]; initialLeads?: LeadItem[]; initialAgents?: AgentItem[]; initialViewings?: ViewingItem[]; initialOffers?: OfferItem[]; initialDeals?: DealItem[]; initialCommissions?: CommissionItem[]; }
 export type AdminTab = 'OVERVIEW'|'LEADS_CRM'|'PROPERTIES'|'AGENTS'|'VIEWINGS'|'OFFERS'|'DEALS'|'COMMISSIONS'|'DEVELOPMENT_CMS';
