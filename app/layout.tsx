@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Manrope } from 'next/font/google';
 import './globals.css';
+import './properties-manager.css';
 import { I18nProvider } from '@/lib/i18n/context';
 
 const playfair = Playfair_Display({
