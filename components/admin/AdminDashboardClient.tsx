@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ProjectItem, InquiryItem, TimelineItem, NewsItem, PropertyItem, LeadItem, AgentItem, ViewingItem, OfferItem, DealItem, CommissionItem } from '@/types';
 import { TanmiyatLogo } from '@/components/brand/TanmiyatLogo';
 import { DashboardStats } from '@/components/admin/DashboardStatsClient';
@@ -21,8 +21,31 @@ const readJson = async (res: Response): Promise<{success?:boolean;data?:unknown;
 export const AdminDashboardClient: React.FC<AdminDashboardClientProps> = ({ initialProjects, initialInquiries, initialTimeline, initialNews, initialProperties=[], initialLeads=[], initialAgents=[], initialViewings=[], initialOffers=[], initialDeals=[], initialCommissions=[] }) => {
  const [isAuthenticated,setIsAuthenticated]=useState(false); const [authChecking,setAuthChecking]=useState(true); const [authEmail,setAuthEmail]=useState(''); const [authPassword,setAuthPassword]=useState(''); const [authError,setAuthError]=useState(''); const [activeTab,setActiveTab]=useState<AdminTab>('OVERVIEW');
  const [projects,setProjects]=useState<ProjectItem[]>(initialProjects); const [inquiries,setInquiries]=useState<InquiryItem[]>(initialInquiries); const [timeline,setTimeline]=useState<TimelineItem[]>(initialTimeline); const [news,setNews]=useState<NewsItem[]>(initialNews); const [properties,setProperties]=useState<PropertyItem[]>(initialProperties); const [leads,setLeads]=useState<LeadItem[]>(initialLeads); const [agents,setAgents]=useState<AgentItem[]>(initialAgents); const [viewings,setViewings]=useState<ViewingItem[]>(initialViewings); const [offers,setOffers]=useState<OfferItem[]>(initialOffers); const [deals,setDeals]=useState<DealItem[]>(initialDeals); const [commissions,setCommissions]=useState<CommissionItem[]>(initialCommissions);
+ const refreshPromiseRef=useRef<Promise<void>|null>(null);
  const allUnits=projects.flatMap(p=>(p.units||[]).map(u=>({...u,projectName:p.title})));
- const loadAdminData=async()=>{ const endpoints=[['projects','/api/projects'],['inquiries','/api/inquiries'],['timeline','/api/timeline'],['news','/api/news'],['properties','/api/properties?limit=24'],['leads','/api/leads'],['agents','/api/agents'],['viewings','/api/viewings'],['offers','/api/offers'],['deals','/api/deals'],['commissions','/api/commissions']] as const; const results=await Promise.allSettled(endpoints.map(async([,url])=>{const res=await fetch(url,{cache:'no-store',credentials:'include'});const json=await readJson(res);if(!res.ok||!json.success)throw new Error(json.error||`Failed to load CRM data (HTTP ${res.status}).`);return json.data;})); const data=Object.fromEntries(results.map((r,i)=>[endpoints[i][0],r.status==='fulfilled'?r.value:[]])); setProjects((data.projects as ProjectItem[]|undefined)||[]);setInquiries((data.inquiries as InquiryItem[]|undefined)||[]);setTimeline((data.timeline as TimelineItem[]|undefined)||[]);setNews((data.news as NewsItem[]|undefined)||[]);setProperties((data.properties as PropertyItem[]|undefined)||[]);setLeads((data.leads as LeadItem[]|undefined)||[]);setAgents((data.agents as AgentItem[]|undefined)||[]);setViewings((data.viewings as ViewingItem[]|undefined)||[]);setOffers((data.offers as OfferItem[]|undefined)||[]);setDeals((data.deals as DealItem[]|undefined)||[]);setCommissions((data.commissions as CommissionItem[]|undefined)||[]); };
+ const loadAdminData=async()=>{
+  if(refreshPromiseRef.current)return refreshPromiseRef.current;
+  const run=async()=>{
+   const endpoints=[['projects','/api/projects'],['inquiries','/api/inquiries'],['timeline','/api/timeline'],['news','/api/news'],['properties','/api/properties?limit=24'],['leads','/api/leads'],['agents','/api/agents'],['viewings','/api/viewings'],['offers','/api/offers'],['deals','/api/deals'],['commissions','/api/commissions']] as const;
+   const setters=[setProjects,setInquiries,setTimeline,setNews,setProperties,setLeads,setAgents,setViewings,setOffers,setDeals,setCommissions] as const;
+   // Fetch in small sequential steps instead of firing all CRM endpoints at once.
+   // This prevents reverse-proxy/API burst limits from turning a successful delete into a 429 storm.
+   for(let i=0;i<endpoints.length;i++){
+    const [,url]=endpoints[i];
+    try{
+     const res=await fetch(url,{cache:'no-store',credentials:'include'});
+     const json=await readJson(res);
+     if(!res.ok||!json.success)continue;
+     const setter=setters[i] as React.Dispatch<React.SetStateAction<unknown[]>>;
+     setter((json.data as unknown[])||[]);
+    }catch{
+     // Keep the already-loaded state when one non-critical dashboard endpoint fails.
+    }
+   }
+  };
+  refreshPromiseRef.current=run();
+  try{await refreshPromiseRef.current}finally{refreshPromiseRef.current=null}
+ };
  useEffect(()=>{let active=true;fetch('/api/auth/me',{cache:'no-store',credentials:'include'}).then(async res=>{if(!active)return;const json=await readJson(res);if(res.ok&&json.success){setIsAuthenticated(true);await loadAdminData();}}).catch(()=>{}).finally(()=>{if(active)setAuthChecking(false)});return()=>{active=false}},[]);
  const handleLogin=async(e:React.FormEvent)=>{e.preventDefault();setAuthError('');try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({email:authEmail.trim(),password:authPassword})});const json=await readJson(res);if(!res.ok||!json.success)throw new Error(json.error||`Authentication failed (HTTP ${res.status}).`);setIsAuthenticated(true);setAuthPassword('');await loadAdminData()}catch(err){setAuthError(err instanceof Error?err.message:'Authentication failed.')}};
  const handleLogout=async()=>{try{await fetch('/api/auth/logout',{method:'POST',credentials:'include',cache:'no-store'})}finally{setIsAuthenticated(false);setAuthPassword('');setAuthError('')}};
