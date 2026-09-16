@@ -5,16 +5,18 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CookieBanner } from '@/components/layout/CookieBanner';
 import { HomeClientWrapper } from '@/components/home/HomeClientWrapper';
- // ISR revalidation
 
 export default async function HomePage() {
-  const [projects, timeline, news] = await Promise.all([
+  const [projects, timeline, news, saleResult, rentResult] = await Promise.all([
     repository.getProjects(),
     repository.getTimeline(),
     repository.getNews(),
+    repository.getProperties({ purpose: 'FOR_SALE', isPublic: true, page: 1, limit: 4, sort: 'featured' }),
+    repository.getProperties({ purpose: 'FOR_RENT', isPublic: true, page: 1, limit: 4, sort: 'featured' }),
   ]);
 
   const featuredProject = projects.find((p) => p.slug === 'living-legends') || projects[0];
+  const properties = [...saleResult.properties, ...rentResult.properties];
 
   return (
     <div className="bg-[#0A0A09] text-[#F5F2EB] min-h-screen flex flex-col selection:bg-[#B79A62] selection:text-[#0A0A09]">
@@ -26,6 +28,7 @@ export default async function HomePage() {
           timeline={timeline}
           news={news}
           featuredProject={featuredProject}
+          properties={properties}
         />
       </main>
 
