@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ProjectItem, TimelineItem, NewsItem } from '@/types';
+import type { ProjectItem, TimelineItem, NewsItem, PropertyItem } from '@/types';
 import { InquiryModal } from '@/components/inquiry/InquiryModal';
 import { HeroSection } from '@/components/home/HeroSection';
+import { PropertyShowcase } from '@/components/home/PropertyShowcase';
 import { FeaturedDevelopment } from '@/components/home/FeaturedDevelopment';
 import { AboutSection } from '@/components/home/AboutSection';
 import { DevelopmentsPreview } from '@/components/home/DevelopmentsPreview';
@@ -15,6 +16,7 @@ interface HomeClientWrapperProps {
   projects: ProjectItem[];
   timeline: TimelineItem[];
   news: NewsItem[];
+  properties: PropertyItem[];
   featuredProject?: ProjectItem;
 }
 
@@ -22,6 +24,7 @@ export const HomeClientWrapper: React.FC<HomeClientWrapperProps> = ({
   projects,
   timeline,
   news,
+  properties,
   featuredProject,
 }) => {
   const [inquiryOpen, setInquiryOpen] = useState(false);
@@ -29,6 +32,8 @@ export const HomeClientWrapper: React.FC<HomeClientWrapperProps> = ({
   return (
     <>
       <HeroSection onInquireClick={() => setInquiryOpen(true)} />
+
+      <PropertyShowcase properties={properties} />
 
       {featuredProject && <FeaturedDevelopment project={featuredProject} />}
 
